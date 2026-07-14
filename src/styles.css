@@ -390,13 +390,32 @@ button {
   margin: 0 0 10px;
 }
 
-.codingExplanation ol {
-  margin: 0;
-  padding-left: 20px;
+.traceTable {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
 }
 
-.codingExplanation li {
-  margin: 6px 0;
+.traceRow {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.75fr) minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid #ead89d;
+  border-radius: 7px;
+  background: #fffdf4;
+}
+
+.traceRow code {
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #21352d;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+}
+
+.traceRow span {
   line-height: 1.55;
 }
 
@@ -532,5 +551,9 @@ button {
   .pager {
     padding-left: 14px;
     padding-right: 14px;
+  }
+
+  .traceRow {
+    grid-template-columns: 1fr;
   }
 }

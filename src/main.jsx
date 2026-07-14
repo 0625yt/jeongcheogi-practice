@@ -23,54 +23,142 @@ function plainText(html) {
   return element.textContent ?? "";
 }
 
+function normalizeCodeLine(line) {
+  return line.replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function extractCodeLines(html) {
+  const element = document.createElement("div");
+  element.innerHTML = html;
+  const codeBlocks = [...element.querySelectorAll(".colorscripter-code")];
+
+  return codeBlocks.flatMap((block) => {
+    const cells = [...block.querySelectorAll("td")];
+    const codeCell = cells.find((cell) => !/^\s*\d+(\s+\d+)*\s*$/.test(cell.textContent ?? ""));
+    const source = codeCell ?? block;
+    return [...source.querySelectorAll("div")]
+      .map((line) => normalizeCodeLine(line.textContent ?? ""))
+      .filter((line) => line && line !== "cs" && !/^Colored by/i.test(line));
+  });
+}
+
+const detailedCodeExplanations = {
+  "2026년-1회-1": {
+    title: "C 코드 흐름",
+    summary:
+      "arr의 합은 530이고, arr1과 arr2는 같은 배열을 다른 문법으로 순회해 각각 평균 53.00을 반환합니다. 그래서 출력은 53.00 + 53.00 = 106.00입니다.",
+    trace: [
+      { code: "int arr[10] = {80, 20, 50, 55, 45, 95, 55, 10, 40, 80};", note: "배열 원소 10개의 합은 530입니다." },
+      { code: "double arr1(int p[], int len)", note: "p[]는 배열처럼 보이지만 함수 안에서는 첫 원소를 가리키는 포인터처럼 동작합니다." },
+      { code: "for (i = 0; i < len; i++) av += (double)p[i];", note: "p[0]부터 p[9]까지 더해서 av는 530이 됩니다." },
+      { code: "return av / len;", note: "530 / 10이므로 arr1은 53.00을 반환합니다." },
+      { code: "double arr2(int *p, int len)", note: "arr2는 배열을 포인터 p로 받습니다." },
+      { code: "av += (double)(*(p + i));", note: "*(p+i)는 p[i]와 같은 값입니다. 결국 같은 10개 원소를 더해 av는 530이 됩니다." },
+      { code: "printf(\"%.2f\", arr1(arr, len) + arr2(arr, len));", note: "53.00 + 53.00 = 106.00이고, %.2f라서 소수 둘째 자리까지 출력합니다." },
+    ],
+  },
+  "2026년-1회-7": {
+    title: "Java 오버라이딩/오버로딩 흐름",
+    summary:
+      "g()는 A에 정의되어 있지만 실제 객체가 B이면 f(\"a\") 호출은 B의 오버라이딩된 f(Object)로 동적 바인딩됩니다.",
+    trace: [
+      { code: "A obj = new B();", note: "참조 타입은 A, 실제 객체 타입은 B입니다." },
+      { code: "obj.g()", note: "g 메서드는 A에 있으므로 A.g()가 실행됩니다." },
+      { code: "return f(\"a\");", note: "A.g 내부에서 f를 호출하지만, 실제 객체가 B라서 오버라이딩이 적용됩니다." },
+      { code: "String f(Object x) { return \"2\"; }", note: "A의 f(Object)를 B가 오버라이딩했으므로 이 메서드가 호출됩니다." },
+      { code: "String f(String x) { return \"3\"; }", note: "이 메서드는 B에만 있는 오버로딩입니다. A.g의 컴파일 기준에서는 f(Object)가 선택되어 여기로 가지 않습니다." },
+    ],
+  },
+  "2026년-1회-8": {
+    title: "Python 문자열 흐름",
+    summary:
+      "입력 HumanDev는 공백이 없어서 그대로 리스트에 들어가고, 뒤집은 뒤 o/n/g를 제거해 veDamuH가 됩니다.",
+    trace: [
+      { code: "i = input()", note: "입력값은 HumanDev입니다." },
+      { code: "for word in i.split(): x.append(word)", note: "공백이 없으므로 i.split()은 ['HumanDev']이고 x도 ['HumanDev']가 됩니다." },
+      { code: "y = ''.join(x)", note: "리스트를 붙여 y는 'HumanDev'가 됩니다." },
+      { code: "y[::-1]", note: "문자열을 뒤집으면 'veDnamuH'입니다." },
+      { code: "if c not in 'ong'", note: "뒤집힌 문자열에서 n은 제거되고, o/g는 원래 없어서 결과는 'veDamuH'입니다." },
+      { code: "print(z)", note: "최종 출력은 veDamuH입니다." },
+    ],
+  },
+  "2026년-1회-13": {
+    title: "Python 슬라이싱 흐름",
+    summary:
+      "lst[:: -2]는 뒤에서부터 2칸씩 건너뛰므로 9, 7, 5, 3, 1이 선택됩니다.",
+    trace: [
+      { code: "lst = list(range(10))", note: "lst는 [0,1,2,3,4,5,6,7,8,9]입니다." },
+      { code: "lst[::-2]", note: "끝에서 시작해 두 칸씩 왼쪽으로 이동하므로 [9,7,5,3,1]입니다." },
+      { code: "print(c, end='A')", note: "각 숫자 뒤에 줄바꿈 대신 A를 붙입니다." },
+      { code: "print()", note: "반복이 끝난 뒤 줄바꿈만 추가합니다." },
+    ],
+  },
+  "2026년-1회-17": {
+    title: "Java 문자열 결합 흐름",
+    summary:
+      "덧셈은 왼쪽부터 계산됩니다. 숫자 9+2는 11이지만, 그 뒤 문자열을 만나면서 이후는 모두 문자열 결합입니다.",
+    trace: [
+      { code: "int x1 = 9; int x2 = 2; String x3 = \"3\";", note: "x1은 9, x2는 2, x3는 문자열 '3'입니다." },
+      { code: "x1 + x2", note: "처음 두 값은 둘 다 숫자라서 9 + 2 = 11입니다." },
+      { code: "11 + \"2\"", note: "문자열 '2'를 만났으므로 결과는 문자열 '112'가 됩니다." },
+      { code: "\"112\" + x3", note: "문자열 '112'에 문자열 '3'을 붙여 '1123'이 됩니다." },
+      { code: "System.out.println(...)", note: "최종 출력은 1123입니다." },
+    ],
+  },
+};
+
+function explainCodeLine(line) {
+  if (/^\s*(#include|import|using)\b/.test(line)) return "라이브러리나 패키지를 불러오는 줄입니다. 값 변화는 없습니다.";
+  if (/^\s*(int|double|float|char|String|boolean|long|short)\b/.test(line) && /=/.test(line)) {
+    return "변수를 선언하면서 오른쪽 계산 결과를 왼쪽 변수에 저장합니다.";
+  }
+  if (/^\s*(int|double|float|char|String|boolean|long|short)\b/.test(line)) {
+    return "변수나 함수의 타입을 정하는 선언부입니다.";
+  }
+  if (/for\s*\(/.test(line) || /^for\b/.test(line)) {
+    return "반복문입니다. 초기값, 반복 조건, 증가/감소식을 기준으로 반복 횟수와 변수 변화를 추적해야 합니다.";
+  }
+  if (/while\s*\(/.test(line)) return "조건이 참인 동안 반복됩니다. 반복마다 조건에 쓰인 값이 어떻게 바뀌는지 확인합니다.";
+  if (/if\s*\(/.test(line) || /^if\b/.test(line)) return "조건문입니다. 현재 변수 값으로 조건이 참인지 거짓인지 판단해 실행 경로가 갈립니다.";
+  if (/else\b/.test(line)) return "앞의 if 조건이 거짓일 때 실행되는 경로입니다.";
+  if (/return\b/.test(line)) return "함수의 결과값을 돌려주고 이 함수 실행을 끝냅니다.";
+  if (/(printf|println|print)\s*\(/.test(line)) return "출력문입니다. 이 시점의 변수 값과 서식 문자열이 실제 화면에 찍힙니다.";
+  if (/catch\s*\(/.test(line)) return "예외가 발생했을 때 넘어오는 처리 블록입니다.";
+  if (/try\b/.test(line)) return "예외가 발생할 수 있는 코드를 실행하는 블록입니다.";
+  if (/=\s*.+/.test(line)) return "오른쪽 값을 계산해서 왼쪽 변수나 위치에 저장합니다.";
+  if (/\+\+|--|\+=|-=|\*=|\/=/.test(line)) return "기존 변수 값을 증가, 감소, 누적 갱신합니다.";
+  if (/class\b/.test(line)) return "클래스 정의입니다. 객체가 가질 메서드나 값을 묶습니다.";
+  if (/struct\b/.test(line)) return "구조체 정의입니다. 여러 데이터를 하나의 묶음으로 다룹니다.";
+  if (/^\s*[{};]+\s*$/.test(line)) return "블록의 시작/끝 또는 문장 종료입니다. 직접적인 값 변화는 없습니다.";
+  return "이 줄의 식이나 호출이 현재 변수 상태를 바탕으로 다음 실행 흐름을 만듭니다.";
+}
+
 function getCodingExplanation(question) {
   const prompt = plainText(question.promptHtml);
   const answer = question.answerText;
+  const questionKey = `${question.examId}-${question.number}`;
+  const detailed = detailedCodeExplanations[questionKey];
+  if (detailed) return { ...detailed, answer, mode: "detailed" };
+
   const isCoding =
     /(C언어|자바|Java|JAVA|파이썬|Python|Pyhon|코드|소스코드|출력값|출력 값|SQL)/i.test(prompt);
 
   if (!isCoding) return null;
 
-  const lowerPrompt = prompt.toLowerCase();
-  const points = [];
-
-  if (/sql/i.test(prompt)) {
-    points.push("FROM/JOIN으로 먼저 대상 행을 만들고, ON 조건과 WHERE 조건으로 남는 행을 줄입니다.");
-    points.push("DISTINCT, COUNT, GROUP BY가 있으면 중복 제거가 어느 시점에 적용되는지 따로 계산합니다.");
-    points.push("최종 SELECT 절이 값 자체를 보여주는지, 행 개수나 집계값을 보여주는지 확인합니다.");
-  } else if (/python|pyhon|파이썬/i.test(prompt)) {
-    points.push("리스트, 딕셔너리, 집합처럼 값이 바뀌는 객체는 변경 전후 상태를 표로 적어가며 추적합니다.");
-    points.push("슬라이싱, 얕은 복사, join, comprehension이 있으면 새 객체를 만드는지 기존 객체를 바꾸는지 구분합니다.");
-    points.push("print의 end 값과 문자열 결합 순서를 마지막에 반영해 실제 출력 모양을 맞춥니다.");
-  } else if (/java|자바/i.test(prompt)) {
-    points.push("오버라이딩은 실행 시점의 실제 객체 타입, 오버로딩은 컴파일 시점의 매개변수 타입을 기준으로 봅니다.");
-    points.push("생성자, static 멤버, 예외 처리, 재귀 호출이 있으면 실행 순서대로 호출 스택을 적어봅니다.");
-    points.push("문자열과 숫자가 함께 더해질 때는 왼쪽부터 계산되며, 문자열을 만난 뒤에는 이어붙이기가 됩니다.");
-  } else if (/c언어|#include|stdio|printf|scanf|struct|pointer|\*/i.test(prompt)) {
-    points.push("배열 인덱스, 포인터 이동, 구조체 멤버 접근이 있으면 각 변수의 현재 값을 한 줄씩 갱신합니다.");
-    points.push("전위/후위 증가, 형 변환, 나눗셈, 주소 참조 연산은 계산되는 순간의 값을 기준으로 확인합니다.");
-    points.push("printf의 서식 지정자와 줄바꿈 여부를 마지막에 적용해 출력 형태를 맞춥니다.");
-  } else {
-    points.push("초기값을 먼저 적고, 반복문/조건문/함수 호출 순서대로 변수 값을 갱신합니다.");
-    points.push("출력문이 여러 개면 출력되는 순서와 줄바꿈 여부를 마지막에 합칩니다.");
-  }
-
-  if (/for|while|range|반복/i.test(lowerPrompt)) {
-    points.push("반복문은 시작값, 종료 조건, 증가식을 먼저 확인한 뒤 각 반복마다 바뀐 값만 따로 적습니다.");
-  }
-
-  if (/재귀|recursive|return\s+\w+\(/i.test(lowerPrompt)) {
-    points.push("재귀는 종료 조건에서 되돌아오며 더해지거나 곱해지는 값을 역순으로 계산합니다.");
-  }
-
-  if (/try|catch|exception|예외/i.test(lowerPrompt)) {
-    points.push("예외가 발생하면 그 시점의 일반 실행 흐름은 멈추고, 맞는 catch/finally 블록으로 이동합니다.");
-  }
+  const codeLines = extractCodeLines(question.promptHtml);
+  const trace = codeLines
+    .filter((line) => !/^\d+$/.test(line))
+    .slice(0, 28)
+    .map((line) => ({ code: line, note: explainCodeLine(line) }));
 
   return {
     title: /sql/i.test(prompt) ? "SQL 풀이 포인트" : "코드 추적 풀이",
     answer,
-    points: [...new Set(points)].slice(0, 5),
+    summary: trace.length
+      ? "아래는 실제 코드 줄을 기준으로 실행 흐름을 따라가는 표입니다. 구체 값 계산이 필요한 문제는 이 흐름에서 변수 값을 옆에 적어가며 확인하세요."
+      : "이 문제는 코드 블록이 표 형태로 추출되지 않아 정답과 핵심 흐름만 확인합니다.",
+    trace,
+    mode: trace.length ? "line" : "summary",
   };
 }
 
@@ -368,15 +456,20 @@ function App() {
                   {codingExplanation && (
                     <div className="codingExplanation">
                       <h4>{codingExplanation.title}</h4>
+                      <p>{codingExplanation.summary}</p>
                       <p>
-                        최종 답은 <strong>{codingExplanation.answer}</strong> 입니다. 아래 순서로 코드를 따라가면
-                        정답이 나오는지 확인할 수 있습니다.
+                        최종 답: <strong>{codingExplanation.answer}</strong>
                       </p>
-                      <ol>
-                        {codingExplanation.points.map((point) => (
-                          <li key={point}>{point}</li>
-                        ))}
-                      </ol>
+                      {codingExplanation.trace?.length > 0 && (
+                        <div className="traceTable" aria-label="줄별 코드 흐름">
+                          {codingExplanation.trace.map((step, index) => (
+                            <div className="traceRow" key={`${step.code}-${index}`}>
+                              <code>{step.code}</code>
+                              <span>{step.note}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                   <div className="selfCheck">
