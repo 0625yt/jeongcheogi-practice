@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { customCodePracticeByLanguage, codeTypePracticeExplanations } from "./data/codePractice";
+import { externalLanguageCodeExplanations, externalLanguageCodeQuestions } from "./data/languageCodePages";
 import { exams } from "./data/exams";
 import "./styles.css";
 
@@ -79,6 +80,18 @@ function buildCodeTypeExams(baseExams) {
     });
   });
 
+  Object.entries(externalLanguageCodeQuestions).forEach(([language, questions]) => {
+    const bucket = buckets.get(language);
+    if (!bucket) return;
+
+    questions.forEach((question) => {
+      bucket.push({
+        ...question,
+        number: bucket.length + 1,
+      });
+    });
+  });
+
   customCodePracticeByLanguage.forEach((customExam) => {
     const bucket = buckets.get(customExam.language);
     customExam.questions.forEach((question) => {
@@ -99,6 +112,7 @@ function buildCodeTypeExams(baseExams) {
 
 const detailedCodeExplanations = {
   ...codeTypePracticeExplanations,
+  ...externalLanguageCodeExplanations,
   "2026년-1회-1": {
     title: "C 코드 흐름",
     summary:

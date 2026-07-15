@@ -453,6 +453,35 @@ button {
   white-space: pre;
 }
 
+.questionContent .custom-input {
+  margin: 12px 0;
+  padding: 12px 14px;
+  border: 1px solid #d8ded2;
+  border-radius: 8px;
+  background: #f6f7f3;
+}
+
+.questionContent .custom-input strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.questionContent .custom-input pre,
+.solution .answerTextBlock {
+  margin: 0;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 14px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.solution .answerTextBlock {
+  padding: 12px 14px;
+  border: 1px solid #ead9a9;
+  border-radius: 8px;
+  background: #fffdf5;
+}
+
 .answerPanel {
   padding: 18px 24px 22px;
   background: #f6f7f3;
