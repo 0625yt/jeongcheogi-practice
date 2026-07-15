@@ -7,10 +7,12 @@ import {
   ExternalLink,
   Eye,
   EyeOff,
+  Menu,
   RotateCcw,
   Search,
   Shuffle,
   XCircle,
+  X,
 } from "lucide-react";
 import { exams } from "./data/exams";
 import "./styles.css";
@@ -436,6 +438,8 @@ function App() {
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
   const [practiceMode, setPracticeMode] = useState("sequence");
+  const [examPanelOpen, setExamPanelOpen] = useState(false);
+  const [numberPanelOpen, setNumberPanelOpen] = useState(false);
 
   const selectedExam = exams.find((exam) => exam.id === selectedExamId) ?? exams[0];
 
@@ -510,6 +514,7 @@ function App() {
 
   function jumpTo(index) {
     setCurrentIndex(Math.max(0, Math.min(index, visibleQuestions.length - 1)));
+    setNumberPanelOpen(false);
   }
 
   function randomQuestion() {
@@ -525,11 +530,26 @@ function App() {
     setSelectedExamId(id);
     setCurrentIndex(0);
     setPracticeMode("sequence");
+    setExamPanelOpen(false);
   }
 
   return (
-    <main className="app">
-      <aside className="sidebar">
+    <main className={`app ${examPanelOpen || numberPanelOpen ? "panelOpen" : ""}`}>
+      {(examPanelOpen || numberPanelOpen) && (
+        <button
+          className="panelBackdrop"
+          aria-label="패널 닫기"
+          onClick={() => {
+            setExamPanelOpen(false);
+            setNumberPanelOpen(false);
+          }}
+        />
+      )}
+
+      <aside className={`sidebar ${examPanelOpen ? "open" : ""}`}>
+        <button className="drawerClose" aria-label="회차 패널 닫기" onClick={() => setExamPanelOpen(false)}>
+          <X size={18} />
+        </button>
         <div className="brand">
           <BookOpen size={24} />
           <div>
@@ -612,6 +632,16 @@ function App() {
 
       <section className="workspace">
         <header className="topbar">
+          <div className="mobilePanelActions" aria-label="학습 패널 열기">
+            <button onClick={() => setExamPanelOpen(true)}>
+              <Menu size={16} />
+              회차
+            </button>
+            <button onClick={() => setNumberPanelOpen(true)}>
+              <Menu size={16} />
+              문제 번호
+            </button>
+          </div>
           <div>
             <p>{currentQuestion?.examTitle ?? "문제 없음"}</p>
             <h2>
@@ -648,7 +678,13 @@ function App() {
 
         {currentQuestion ? (
           <article className="questionShell">
-            <div className="questionNav" aria-label="문제 목록">
+            <div className={`questionNav ${numberPanelOpen ? "open" : ""}`} aria-label="문제 목록">
+              <div className="numberPanelHeader">
+                <strong>문제 번호</strong>
+                <button aria-label="문제 번호 패널 닫기" onClick={() => setNumberPanelOpen(false)}>
+                  <X size={18} />
+                </button>
+              </div>
               {visibleQuestions.map((question, index) => {
                 const record = progress[question.key];
                 return (

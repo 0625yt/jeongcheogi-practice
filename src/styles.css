@@ -32,6 +32,13 @@ button {
   grid-template-columns: 320px minmax(0, 1fr);
 }
 
+.panelBackdrop,
+.drawerClose,
+.mobilePanelActions,
+.numberPanelHeader {
+  display: none;
+}
+
 .sidebar {
   position: sticky;
   top: 0;
@@ -276,9 +283,12 @@ button {
 
 .questionContent table {
   max-width: 100%;
+  border-collapse: collapse;
+}
+
+.questionContent table:not(.colorscripter-code-table) {
   display: block;
   overflow-x: auto;
-  border-collapse: collapse;
 }
 
 .questionContent p {
@@ -290,11 +300,48 @@ button {
   margin: 14px 0;
   border: 1px solid #e3e6de;
   border-radius: 8px;
+  overflow-x: auto !important;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  background: #fafafa;
 }
 
 .questionContent .colorscripter-code table {
+  display: table;
   width: max-content;
   min-width: 100%;
+  max-width: none;
+  overflow: visible;
+  table-layout: auto;
+  border-collapse: separate;
+}
+
+.questionContent .colorscripter-code td {
+  vertical-align: top;
+}
+
+.questionContent .colorscripter-code td:first-child {
+  width: 42px;
+  min-width: 42px;
+  max-width: 42px;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: #fafafa;
+}
+
+.questionContent .colorscripter-code td:first-child div {
+  white-space: pre !important;
+}
+
+.questionContent .colorscripter-code td:nth-child(2) {
+  min-width: max-content;
+}
+
+.questionContent .colorscripter-code td:nth-child(2) div {
+  white-space: pre !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
 }
 
 .answerPanel {
@@ -463,25 +510,56 @@ button {
     display: block;
   }
 
+  .panelBackdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: block;
+    background: rgb(14 20 17 / 0.42);
+  }
+
   .sidebar {
-    position: static;
-    height: auto;
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 40;
+    width: min(360px, 88vw);
+    height: 100dvh;
     max-height: none;
-    padding: 18px;
+    padding: 54px 18px 18px;
+    transform: translateX(-102%);
+    transition: transform 180ms ease;
+    box-shadow: 24px 0 54px rgb(0 0 0 / 0.26);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .drawerClose {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+    background: #2d3a34;
+    color: #f7f7ef;
   }
 
   .examList {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    padding-bottom: 4px;
+    display: grid;
+    gap: 7px;
+    max-height: calc(100dvh - 280px);
+    overflow-y: auto;
+    padding-right: 2px;
     margin-bottom: 12px;
-    scrollbar-width: thin;
   }
 
   .examButton {
-    min-width: 148px;
-    flex: 0 0 auto;
+    min-width: 0;
   }
 
   .questionShell {
@@ -490,16 +568,85 @@ button {
   }
 
   .questionNav {
-    position: static;
-    grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+    position: fixed;
+    inset: 0 0 0 auto;
+    z-index: 40;
+    width: min(300px, 82vw);
     max-height: none;
-    margin-bottom: 2px;
-    padding: 0 0 4px;
-    overflow: visible;
+    height: 100dvh;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-content: start;
+    gap: 8px;
+    padding: 58px 16px 18px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: #f7f8f4;
+    border-left: 1px solid #d9ded2;
+    box-shadow: -24px 0 54px rgb(0 0 0 / 0.2);
+    transform: translateX(102%);
+    transition: transform 180ms ease;
+  }
+
+  .questionNav.open {
+    transform: translateX(0);
+  }
+
+  .numberPanelHeader {
+    position: absolute;
+    top: 14px;
+    left: 16px;
+    right: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #17201b;
+  }
+
+  .numberPanelHeader button {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+    background: #e7ebe1;
+    color: #17201b;
   }
 
   .questionNav button {
     min-width: 0;
+  }
+
+  .mobilePanelActions {
+    width: 100%;
+    display: flex;
+    gap: 8px;
+    order: -1;
+  }
+
+  .mobilePanelActions button {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    border-radius: 7px;
+    background: #18221e;
+    color: #f7f7ef;
+  }
+
+  .questionContent .colorscripter-code {
+    margin-left: -2px;
+    margin-right: -2px;
+  }
+
+  .questionContent .colorscripter-code td:first-child {
+    display: none !important;
+  }
+
+  .questionContent .colorscripter-code td:nth-child(2),
+  .questionContent .colorscripter-code td:nth-child(2) > div {
+    min-width: max-content !important;
   }
 }
 
