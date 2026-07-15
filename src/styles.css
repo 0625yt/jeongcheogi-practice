@@ -344,6 +344,19 @@ button {
   overflow-wrap: normal !important;
 }
 
+.questionContent .custom-code {
+  padding: 14px 16px;
+}
+
+.questionContent .custom-code pre {
+  margin: 0;
+  min-width: max-content;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 14px;
+  line-height: 1.65;
+  white-space: pre;
+}
+
 .answerPanel {
   padding: 18px 24px 22px;
   background: #f6f7f3;

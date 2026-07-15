@@ -14,6 +14,7 @@ import {
   XCircle,
   X,
 } from "lucide-react";
+import { codePracticeExam, codePracticeExplanations } from "./data/codePractice";
 import { exams } from "./data/exams";
 import "./styles.css";
 
@@ -45,6 +46,7 @@ function extractCodeLines(html) {
 }
 
 const detailedCodeExplanations = {
+  ...codePracticeExplanations,
   "2026년-1회-1": {
     title: "C 코드 흐름",
     summary:
@@ -430,7 +432,8 @@ function saveProgress(next) {
 }
 
 function App() {
-  const [selectedExamId, setSelectedExamId] = useState(exams[0]?.id);
+  const trainingExams = useMemo(() => [codePracticeExam, ...exams], []);
+  const [selectedExamId, setSelectedExamId] = useState(codePracticeExam.id);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState({});
   const [revealed, setRevealed] = useState({});
@@ -441,11 +444,11 @@ function App() {
   const [examPanelOpen, setExamPanelOpen] = useState(false);
   const [numberPanelOpen, setNumberPanelOpen] = useState(false);
 
-  const selectedExam = exams.find((exam) => exam.id === selectedExamId) ?? exams[0];
+  const selectedExam = trainingExams.find((exam) => exam.id === selectedExamId) ?? trainingExams[0];
 
   const allQuestions = useMemo(
     () =>
-      exams.flatMap((exam) =>
+      trainingExams.flatMap((exam) =>
         exam.questions.map((question, index) => ({
           ...question,
           examId: exam.id,
@@ -455,7 +458,7 @@ function App() {
           key: `${exam.id}-${question.number}`,
         })),
       ),
-    [],
+    [trainingExams],
   );
 
   const visibleQuestions = useMemo(() => {
@@ -607,7 +610,7 @@ function App() {
         </div>
 
         <div className="examList">
-          {exams.map((exam) => {
+          {trainingExams.map((exam) => {
             const solved = exam.questions.filter((question) => progress[`${exam.id}-${question.number}`]).length;
             return (
               <button
@@ -648,7 +651,7 @@ function App() {
               {currentQuestion ? `${currentQuestion.number}번 문제` : "불러온 문제가 없습니다"}
             </h2>
           </div>
-          {currentQuestion && (
+          {currentQuestion?.sourceUrl && (
             <a className="sourceLink" href={currentQuestion.sourceUrl} target="_blank" rel="noreferrer">
               원문
               <ExternalLink size={16} />
