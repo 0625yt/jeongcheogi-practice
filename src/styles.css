@@ -28,26 +28,49 @@ button {
 
 .app {
   min-height: 100vh;
-  display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
+  display: block;
 }
 
-.panelBackdrop,
-.drawerClose,
-.mobilePanelActions,
-.numberPanelHeader {
-  display: none;
+.panelBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: block;
+  background: rgb(14 20 17 / 0.42);
 }
 
 .sidebar {
-  position: sticky;
-  top: 0;
-  height: 100vh;
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 40;
+  width: min(360px, 88vw);
+  height: 100dvh;
   overflow: auto;
-  padding: 24px;
+  padding: 54px 18px 18px;
   background: #18221e;
   color: #f7f7ef;
   border-right: 1px solid #d9ded2;
+  box-shadow: 24px 0 54px rgb(0 0 0 / 0.26);
+  transform: translateX(-102%);
+  transition: transform 180ms ease;
+}
+
+.sidebar.open {
+  transform: translateX(0);
+}
+
+.drawerClose {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  background: #2d3a34;
+  color: #f7f7ef;
 }
 
 .brand {
@@ -187,6 +210,8 @@ button {
 }
 
 .topbar {
+  position: relative;
+  z-index: 60;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -194,10 +219,34 @@ button {
   margin-bottom: 18px;
 }
 
+.mobilePanelActions {
+  position: relative;
+  z-index: 70;
+  display: flex;
+  gap: 8px;
+}
+
+.mobilePanelActions button {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  border-radius: 7px;
+  background: #18221e;
+  color: #f7f7ef;
+}
+
+.mobilePanelActions button.active {
+  background: #f0ca50;
+  color: #17201b;
+}
+
 .topbar h2 {
   margin: 0;
   font-size: 30px;
   letter-spacing: 0;
+  word-break: keep-all;
 }
 
 .topbar p {
@@ -224,27 +273,62 @@ button {
 
 .questionShell {
   display: grid;
-  grid-template-columns: 150px minmax(0, 1fr);
-  column-gap: 28px;
+  grid-template-columns: minmax(0, 1fr);
   row-gap: 18px;
   align-items: start;
 }
 
 .questionNav {
-  position: sticky;
-  top: 18px;
+  position: fixed;
+  inset: 0 0 0 auto;
+  z-index: 40;
+  width: min(320px, 82vw);
+  height: 100dvh;
   display: grid;
-  grid-template-columns: repeat(2, minmax(64px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-content: start;
   gap: 8px;
-  max-height: calc(100vh - 36px);
+  max-height: none;
+  padding: 58px 16px 18px;
   overflow-y: auto;
-  overflow-x: visible;
-  z-index: 2;
+  overflow-x: hidden;
+  background: #f7f8f4;
+  border-left: 1px solid #d9ded2;
+  box-shadow: -24px 0 54px rgb(0 0 0 / 0.2);
+  transform: translateX(102%);
+  transition: transform 180ms ease;
+}
+
+.questionNav.open {
+  transform: translateX(0);
+}
+
+.numberPanelHeader {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #17201b;
+}
+
+.numberPanelHeader button {
+  width: 34px;
+  height: 34px;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  background: #e7ebe1;
+  color: #17201b;
 }
 
 .questionNav button {
   height: 38px;
-  min-width: 64px;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -304,6 +388,8 @@ button {
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   background: #fafafa;
+  font-size: 13px !important;
+  line-height: 1.1 !important;
 }
 
 .questionContent .colorscripter-code table {
@@ -332,6 +418,8 @@ button {
 
 .questionContent .colorscripter-code td:first-child div {
   white-space: pre !important;
+  font-size: 13px !important;
+  line-height: 1.1 !important;
 }
 
 .questionContent .colorscripter-code td:nth-child(2) {
@@ -342,6 +430,14 @@ button {
   white-space: pre !important;
   word-break: normal !important;
   overflow-wrap: normal !important;
+  font-size: 13px !important;
+  line-height: 1.1 !important;
+}
+
+.questionContent .colorscripter-code td:nth-child(2) > div > div {
+  min-height: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
 }
 
 .questionContent .custom-code {
@@ -352,8 +448,8 @@ button {
   margin: 0;
   min-width: max-content;
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: 14px;
-  line-height: 1.65;
+  font-size: 13px;
+  line-height: 1.18;
   white-space: pre;
 }
 
@@ -519,49 +615,6 @@ button {
 }
 
 @media (max-width: 920px) {
-  .app {
-    display: block;
-  }
-
-  .panelBackdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 30;
-    display: block;
-    background: rgb(14 20 17 / 0.42);
-  }
-
-  .sidebar {
-    position: fixed;
-    inset: 0 auto 0 0;
-    z-index: 40;
-    width: min(360px, 88vw);
-    height: 100dvh;
-    max-height: none;
-    padding: 54px 18px 18px;
-    transform: translateX(-102%);
-    transition: transform 180ms ease;
-    box-shadow: 24px 0 54px rgb(0 0 0 / 0.26);
-  }
-
-  .sidebar.open {
-    transform: translateX(0);
-  }
-
-  .drawerClose {
-    position: absolute;
-    top: 14px;
-    right: 14px;
-    width: 34px;
-    height: 34px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 7px;
-    background: #2d3a34;
-    color: #f7f7ef;
-  }
-
   .examList {
     display: grid;
     gap: 7px;
@@ -580,72 +633,9 @@ button {
     row-gap: 20px;
   }
 
-  .questionNav {
-    position: fixed;
-    inset: 0 0 0 auto;
-    z-index: 40;
-    width: min(300px, 82vw);
-    max-height: none;
-    height: 100dvh;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    align-content: start;
-    gap: 8px;
-    padding: 58px 16px 18px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    background: #f7f8f4;
-    border-left: 1px solid #d9ded2;
-    box-shadow: -24px 0 54px rgb(0 0 0 / 0.2);
-    transform: translateX(102%);
-    transition: transform 180ms ease;
-  }
-
-  .questionNav.open {
-    transform: translateX(0);
-  }
-
-  .numberPanelHeader {
-    position: absolute;
-    top: 14px;
-    left: 16px;
-    right: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    color: #17201b;
-  }
-
-  .numberPanelHeader button {
-    width: 34px;
-    height: 34px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 7px;
-    background: #e7ebe1;
-    color: #17201b;
-  }
-
-  .questionNav button {
-    min-width: 0;
-  }
-
   .mobilePanelActions {
     width: 100%;
-    display: flex;
-    gap: 8px;
     order: -1;
-  }
-
-  .mobilePanelActions button {
-    min-height: 38px;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 0 12px;
-    border-radius: 7px;
-    background: #18221e;
-    color: #f7f7ef;
   }
 
   .questionContent .colorscripter-code {

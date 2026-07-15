@@ -14,11 +14,17 @@ import {
   XCircle,
   X,
 } from "lucide-react";
-import { codePracticeExam, codePracticeExplanations } from "./data/codePractice";
+import { customCodePracticeByLanguage, codeTypePracticeExplanations } from "./data/codePractice";
 import { exams } from "./data/exams";
 import "./styles.css";
 
 const STORAGE_KEY = "engineer-practical-exam-trainer";
+
+const CODE_LANGUAGE_TYPES = [
+  { id: "코드기출-C", title: "코드 기출 C", language: "c", label: "C" },
+  { id: "코드기출-Java", title: "코드 기출 Java", language: "java", label: "Java" },
+  { id: "코드기출-Python", title: "코드 기출 Python", language: "python", label: "Python" },
+];
 
 function plainText(html) {
   const element = document.createElement("div");
@@ -45,8 +51,54 @@ function extractCodeLines(html) {
   });
 }
 
+function detectCodeLanguage(text) {
+  if (/(C언어|C코드|C 언어|다음은 C\b)/i.test(text)) return "c";
+  if (/(Java|JAVA|자바)/i.test(text)) return "java";
+  if (/(Python|Pyhon|파이썬)/i.test(text)) return "python";
+  return null;
+}
+
+function buildCodeTypeExams(baseExams) {
+  const buckets = new Map(CODE_LANGUAGE_TYPES.map((type) => [type.language, []]));
+
+  baseExams.forEach((exam) => {
+    exam.questions.forEach((question) => {
+      const promptText = plainText(question.promptHtml);
+      const language = detectCodeLanguage(promptText);
+      if (!language || !/(코드|출력값|출력 값|실행 결과|출력되는 값|알맞는 출력)/i.test(promptText)) return;
+
+      const bucket = buckets.get(language);
+      const type = CODE_LANGUAGE_TYPES.find((item) => item.language === language);
+      bucket.push({
+        ...question,
+        number: bucket.length + 1,
+        sourceUrl: exam.sourceUrl,
+        explanationKey: `${exam.id}-${question.number}`,
+        promptHtml: `<p><b>[${exam.title} ${question.number}번] ${type.label} 코드 기출</b></p>${question.promptHtml}`,
+      });
+    });
+  });
+
+  customCodePracticeByLanguage.forEach((customExam) => {
+    const bucket = buckets.get(customExam.language);
+    customExam.questions.forEach((question) => {
+      bucket.push({
+        ...question,
+        number: bucket.length + 1,
+      });
+    });
+  });
+
+  return CODE_LANGUAGE_TYPES.map((type) => ({
+    id: type.id,
+    title: type.title,
+    sourceUrl: "",
+    questions: buckets.get(type.language),
+  }));
+}
+
 const detailedCodeExplanations = {
-  ...codePracticeExplanations,
+  ...codeTypePracticeExplanations,
   "2026년-1회-1": {
     title: "C 코드 흐름",
     summary:
@@ -396,7 +448,7 @@ function explainCodeLine(line) {
 function getCodingExplanation(question) {
   const prompt = plainText(question.promptHtml);
   const answer = question.answerText;
-  const questionKey = `${question.examId}-${question.number}`;
+  const questionKey = question.explanationKey ?? `${question.examId}-${question.number}`;
   const detailed = detailedCodeExplanations[questionKey];
   if (detailed) return { ...detailed, answer, mode: "detailed" };
 
@@ -432,8 +484,9 @@ function saveProgress(next) {
 }
 
 function App() {
-  const trainingExams = useMemo(() => [codePracticeExam, ...exams], []);
-  const [selectedExamId, setSelectedExamId] = useState(codePracticeExam.id);
+  const codeTypeExams = useMemo(() => buildCodeTypeExams(exams), []);
+  const trainingExams = useMemo(() => [...codeTypeExams, ...exams], [codeTypeExams]);
+  const [selectedExamId, setSelectedExamId] = useState(CODE_LANGUAGE_TYPES[0].id);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState({});
   const [revealed, setRevealed] = useState({});
@@ -453,7 +506,7 @@ function App() {
           ...question,
           examId: exam.id,
           examTitle: exam.title,
-          sourceUrl: exam.sourceUrl,
+          sourceUrl: question.sourceUrl ?? exam.sourceUrl,
           localIndex: index,
           key: `${exam.id}-${question.number}`,
         })),
@@ -469,7 +522,7 @@ function App() {
             ...question,
             examId: selectedExam.id,
             examTitle: selectedExam.title,
-            sourceUrl: selectedExam.sourceUrl,
+            sourceUrl: question.sourceUrl ?? selectedExam.sourceUrl,
             localIndex: index,
             key: `${selectedExam.id}-${question.number}`,
           }));
@@ -636,11 +689,23 @@ function App() {
       <section className="workspace">
         <header className="topbar">
           <div className="mobilePanelActions" aria-label="학습 패널 열기">
-            <button onClick={() => setExamPanelOpen(true)}>
+            <button
+              className={examPanelOpen ? "active" : ""}
+              onClick={() => {
+                setExamPanelOpen((open) => !open);
+                setNumberPanelOpen(false);
+              }}
+            >
               <Menu size={16} />
               회차
             </button>
-            <button onClick={() => setNumberPanelOpen(true)}>
+            <button
+              className={numberPanelOpen ? "active" : ""}
+              onClick={() => {
+                setNumberPanelOpen((open) => !open);
+                setExamPanelOpen(false);
+              }}
+            >
               <Menu size={16} />
               문제 번호
             </button>

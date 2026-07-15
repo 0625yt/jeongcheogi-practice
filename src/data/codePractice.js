@@ -376,3 +376,51 @@ export const codePracticeExplanations = {
     ],
   },
 };
+
+export const customCodePracticeByLanguage = [
+  {
+    id: "코드기출-C",
+    title: "코드 기출 C",
+    language: "c",
+    questions: codePracticeExam.questions.slice(0, 4).map((item, index) => ({
+      ...item,
+      number: index + 1,
+      explanationKey: `코드기출-C-${index + 1}`,
+    })),
+  },
+  {
+    id: "코드기출-Java",
+    title: "코드 기출 Java",
+    language: "java",
+    questions: codePracticeExam.questions.slice(4, 8).map((item, index) => ({
+      ...item,
+      number: index + 1,
+      explanationKey: `코드기출-Java-${index + 1}`,
+    })),
+  },
+  {
+    id: "코드기출-Python",
+    title: "코드 기출 Python",
+    language: "python",
+    questions: codePracticeExam.questions.slice(8, 12).map((item, index) => ({
+      ...item,
+      number: index + 1,
+      explanationKey: `코드기출-Python-${index + 1}`,
+    })),
+  },
+];
+
+export const codeTypePracticeExplanations = {
+  "코드기출-C-1": codePracticeExplanations["코드기출-유형-1"],
+  "코드기출-C-2": codePracticeExplanations["코드기출-유형-2"],
+  "코드기출-C-3": codePracticeExplanations["코드기출-유형-3"],
+  "코드기출-C-4": codePracticeExplanations["코드기출-유형-4"],
+  "코드기출-Java-1": codePracticeExplanations["코드기출-유형-5"],
+  "코드기출-Java-2": codePracticeExplanations["코드기출-유형-6"],
+  "코드기출-Java-3": codePracticeExplanations["코드기출-유형-7"],
+  "코드기출-Java-4": codePracticeExplanations["코드기출-유형-8"],
+  "코드기출-Python-1": codePracticeExplanations["코드기출-유형-9"],
+  "코드기출-Python-2": codePracticeExplanations["코드기출-유형-10"],
+  "코드기출-Python-3": codePracticeExplanations["코드기출-유형-11"],
+  "코드기출-Python-4": codePracticeExplanations["코드기출-유형-12"],
+};
