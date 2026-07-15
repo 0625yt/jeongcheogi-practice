@@ -584,7 +584,6 @@ function App() {
 
   function jumpTo(index) {
     setCurrentIndex(Math.max(0, Math.min(index, visibleQuestions.length - 1)));
-    setNumberPanelOpen(false);
   }
 
   function randomQuestion() {
@@ -604,8 +603,8 @@ function App() {
   }
 
   return (
-    <main className={`app ${examPanelOpen || numberPanelOpen ? "panelOpen" : ""}`}>
-      {(examPanelOpen || numberPanelOpen) && (
+    <main className={`app ${examPanelOpen ? "examPanelOpen" : ""} ${numberPanelOpen ? "numberPanelOpen" : ""}`}>
+      {examPanelOpen && (
         <button
           className="panelBackdrop"
           aria-label="패널 닫기"

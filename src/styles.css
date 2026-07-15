@@ -34,7 +34,7 @@ button {
 .panelBackdrop {
   position: fixed;
   inset: 0;
-  z-index: 30;
+  z-index: 65;
   display: block;
   background: rgb(14 20 17 / 0.42);
 }
@@ -42,7 +42,7 @@ button {
 .sidebar {
   position: fixed;
   inset: 0 auto 0 0;
-  z-index: 40;
+  z-index: 80;
   width: min(360px, 88vw);
   height: 100dvh;
   overflow: auto;
@@ -211,7 +211,7 @@ button {
 
 .topbar {
   position: relative;
-  z-index: 60;
+  z-index: 20;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -221,7 +221,7 @@ button {
 
 .mobilePanelActions {
   position: relative;
-  z-index: 70;
+  z-index: 20;
   display: flex;
   gap: 8px;
 }
@@ -281,7 +281,7 @@ button {
 .questionNav {
   position: fixed;
   inset: 0 0 0 auto;
-  z-index: 40;
+  z-index: 70;
   width: min(320px, 82vw);
   height: 100dvh;
   display: grid;
@@ -301,6 +301,12 @@ button {
 
 .questionNav.open {
   transform: translateX(0);
+}
+
+@media (min-width: 760px) {
+  .app.numberPanelOpen .workspace {
+    padding-right: calc(min(320px, 82vw) + clamp(18px, 3vw, 40px) + 14px);
+  }
 }
 
 .numberPanelHeader {
