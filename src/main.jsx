@@ -43,10 +43,19 @@ function extractCodeLines(html) {
   const codeBlocks = [...element.querySelectorAll(".colorscripter-code")];
 
   return codeBlocks.flatMap((block) => {
+    const pre = block.querySelector("pre code, pre");
+    if (pre) {
+      return (pre.textContent ?? "")
+        .split("\n")
+        .map((line) => normalizeCodeLine(line))
+        .filter((line) => line && line !== "cs" && !/^Colored by/i.test(line));
+    }
+
     const cells = [...block.querySelectorAll("td")];
     const codeCell = cells.find((cell) => !/^\s*\d+(\s+\d+)*\s*$/.test(cell.textContent ?? ""));
-    const source = codeCell ?? block;
-    return [...source.querySelectorAll("div")]
+    const source = codeCell?.querySelector(":scope > div") ?? codeCell ?? block;
+    const lineElements = source.children.length ? [...source.children] : [...source.querySelectorAll("div")];
+    return lineElements
       .map((line) => normalizeCodeLine(line.textContent ?? ""))
       .filter((line) => line && line !== "cs" && !/^Colored by/i.test(line));
   });
@@ -433,30 +442,213 @@ const detailedCodeExplanations = {
   },
 };
 
-function explainCodeLine(line) {
-  if (/^\s*(#include|import|using)\b/.test(line)) return "라이브러리나 패키지를 불러오는 줄입니다. 값 변화는 없습니다.";
-  if (/^\s*(int|double|float|char|String|boolean|long|short)\b/.test(line) && /=/.test(line)) {
-    return "변수를 선언하면서 오른쪽 계산 결과를 왼쪽 변수에 저장합니다.";
+const CODE_KEYWORDS = new Set([
+  "and",
+  "args",
+  "bool",
+  "boolean",
+  "break",
+  "case",
+  "catch",
+  "char",
+  "class",
+  "const",
+  "continue",
+  "def",
+  "double",
+  "else",
+  "enum",
+  "extends",
+  "false",
+  "float",
+  "for",
+  "if",
+  "import",
+  "include",
+  "int",
+  "interface",
+  "long",
+  "main",
+  "new",
+  "not",
+  "null",
+  "or",
+  "print",
+  "printf",
+  "println",
+  "public",
+  "return",
+  "self",
+  "static",
+  "String",
+  "struct",
+  "super",
+  "this",
+  "true",
+  "typedef",
+  "void",
+  "while",
+]);
+
+function compactText(value) {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function splitAnswerFacts(html, answer) {
+  const text = compactText(plainText(html ?? ""));
+  if (!text || text === compactText(answer ?? "")) return [];
+
+  return text
+    .replaceAll("다.", "다.|")
+    .replaceAll(".", ".|")
+    .replaceAll(";", ";|")
+    .split("|")
+    .map((sentence) => compactText(sentence))
+    .filter((sentence) => sentence && sentence !== compactText(answer ?? "") && sentence.length > 5)
+    .slice(0, 8);
+}
+
+function extractIdentifiers(line) {
+  return [...new Set(line.match(/[A-Za-z_][A-Za-z0-9_]*/g) ?? [])]
+    .filter((word) => !CODE_KEYWORDS.has(word) && !/^[A-Z]$/.test(word))
+    .slice(0, 6);
+}
+
+function relatedFact(line, facts) {
+  const identifiers = extractIdentifiers(line);
+  if (!identifiers.length) return "";
+
+  let best = "";
+  let bestScore = 0;
+  facts.forEach((fact) => {
+    const score = identifiers.filter((identifier) => fact.includes(identifier)).length;
+    if (score > bestScore) {
+      bestScore = score;
+      best = fact;
+    }
+  });
+  return bestScore > 0 ? best : "";
+}
+
+function cleanExpression(value) {
+  return value.replace(/[;{]$/g, "").trim();
+}
+
+function describeDataLine(line, answer, fact) {
+  const compactLine = line.trim();
+  const evidence = fact ? ` 풀이 근거: ${fact}` : "";
+  const assignment = compactLine.match(/^(.+?)\s*=\s*(.+?);?$/);
+
+  if (/^\s*(#include|import|using)\b/.test(compactLine)) {
+    return "실행에 필요한 라이브러리를 불러옵니다. 변수 값은 아직 바뀌지 않습니다.";
   }
-  if (/^\s*(int|double|float|char|String|boolean|long|short)\b/.test(line)) {
-    return "변수나 함수의 타입을 정하는 선언부입니다.";
+  if (/^(class|public class|static class|interface|enum)\b/.test(compactLine)) {
+    return "타입 정의가 시작됩니다. 객체나 enum 값이 이후 실행에서 어떤 메서드/값을 갖는지 정합니다.";
   }
-  if (/for\s*\(/.test(line) || /^for\b/.test(line)) {
-    return "반복문입니다. 초기값, 반복 조건, 증가/감소식을 기준으로 반복 횟수와 변수 변화를 추적해야 합니다.";
+  if (/^(typedef\s+)?struct\b/.test(compactLine)) {
+    return "구조체 틀을 정의합니다. 이후 포인터나 배열로 묶어서 다룰 멤버 구성이 여기서 정해집니다.";
   }
-  if (/while\s*\(/.test(line)) return "조건이 참인 동안 반복됩니다. 반복마다 조건에 쓰인 값이 어떻게 바뀌는지 확인합니다.";
-  if (/if\s*\(/.test(line) || /^if\b/.test(line)) return "조건문입니다. 현재 변수 값으로 조건이 참인지 거짓인지 판단해 실행 경로가 갈립니다.";
-  if (/else\b/.test(line)) return "앞의 if 조건이 거짓일 때 실행되는 경로입니다.";
-  if (/return\b/.test(line)) return "함수의 결과값을 돌려주고 이 함수 실행을 끝냅니다.";
-  if (/(printf|println|print)\s*\(/.test(line)) return "출력문입니다. 이 시점의 변수 값과 서식 문자열이 실제 화면에 찍힙니다.";
-  if (/catch\s*\(/.test(line)) return "예외가 발생했을 때 넘어오는 처리 블록입니다.";
-  if (/try\b/.test(line)) return "예외가 발생할 수 있는 코드를 실행하는 블록입니다.";
-  if (/=\s*.+/.test(line)) return "오른쪽 값을 계산해서 왼쪽 변수나 위치에 저장합니다.";
-  if (/\+\+|--|\+=|-=|\*=|\/=/.test(line)) return "기존 변수 값을 증가, 감소, 누적 갱신합니다.";
-  if (/class\b/.test(line)) return "클래스 정의입니다. 객체가 가질 메서드나 값을 묶습니다.";
-  if (/struct\b/.test(line)) return "구조체 정의입니다. 여러 데이터를 하나의 묶음으로 다룹니다.";
-  if (/^\s*[{};]+\s*$/.test(line)) return "블록의 시작/끝 또는 문장 종료입니다. 직접적인 값 변화는 없습니다.";
-  return "이 줄의 식이나 호출이 현재 변수 상태를 바탕으로 다음 실행 흐름을 만듭니다.";
+  if (/^(def|static|public|private|protected|void|int|double|float|char|String|Data|Node|struct)\b.*\)\s*\{?$/.test(compactLine) && !assignment) {
+    return "함수/메서드 진입 지점입니다. 호출될 때 매개변수 값이 들어와 아래 줄들의 계산 기준이 됩니다.";
+  }
+  if (/^for\s*\((.+?);(.+?);(.+?)\)/.test(compactLine)) {
+    const [, init, condition, update] = compactLine.match(/^for\s*\((.+?);(.+?);(.+?)\)/) ?? [];
+    return `반복문입니다. 시작은 ${cleanExpression(init)}, 계속 도는 조건은 ${cleanExpression(condition)}, 한 바퀴 뒤 갱신은 ${cleanExpression(update)}입니다.${evidence}`;
+  }
+  if (/^for\b.+\bin\b/.test(compactLine)) {
+    return `반복 대상에서 값을 하나씩 꺼내 왼쪽 변수에 넣습니다. 각 반복마다 누적 변수나 리스트/딕셔너리 값이 갱신됩니다.${evidence}`;
+  }
+  if (/^while\s*\((.+)\)/.test(compactLine) || /^while\s+(.+):?$/.test(compactLine)) {
+    const condition = (compactLine.match(/^while\s*\((.+)\)/) ?? compactLine.match(/^while\s+(.+):?$/))?.[1] ?? "";
+    return `while 조건 ${cleanExpression(condition)}이 참인 동안 아래 갱신 줄을 반복합니다. 조건에 쓰인 값이 바뀌는 순간 종료 여부가 결정됩니다.${evidence}`;
+  }
+  if (/^if\s*\((.+)\)/.test(compactLine) || /^if\s+(.+):?$/.test(compactLine)) {
+    const condition = (compactLine.match(/^if\s*\((.+)\)/) ?? compactLine.match(/^if\s+(.+):?$/))?.[1] ?? "";
+    return `조건 ${cleanExpression(condition)}을 현재 변수 값으로 계산합니다. 참이면 이 분기로 들어가고, 거짓이면 다음 분기로 넘어갑니다.${evidence}`;
+  }
+  if (/^else\b/.test(compactLine)) {
+    return `직전 if 조건이 거짓일 때 실행되는 경로입니다.${evidence}`;
+  }
+  if (/^return\b/.test(compactLine)) {
+    const returned = cleanExpression(compactLine.replace(/^return\s+/, ""));
+    return `${returned} 값을 호출한 위치로 돌려줍니다. 이 반환값이 상위 계산식이나 출력값에 합쳐집니다.${evidence}`;
+  }
+  if (/(printf|System\.out\.print|System\.out\.println|print|putchar)\s*\(/.test(compactLine)) {
+    return `여기까지 갱신된 변수/배열/참조 값을 출력 형식에 넣습니다. 이 문제의 최종 답은 ${answer}입니다.${evidence}`;
+  }
+  if (/\+\+|--/.test(compactLine)) {
+    return `증감 연산이 실행됩니다. 전위면 값을 먼저 바꾸고 사용하고, 후위면 현재 값을 먼저 사용한 뒤 1만큼 바뀝니다.${evidence}`;
+  }
+  if (/(\+=|-=|\*=|\/=|%=|&=|\|=|\^=)/.test(compactLine)) {
+    const [left, operator, right] = compactLine.split(/(\+=|-=|\*=|\/=|%=|&=|\|=|\^=)/).map(cleanExpression);
+    return `${left}의 기존 값에 ${right} 계산 결과를 ${operator} 규칙으로 누적해 다시 ${left}에 저장합니다.${evidence}`;
+  }
+  if (assignment && !/(==|!=|<=|>=)/.test(compactLine)) {
+    const left = cleanExpression(
+      assignment[1].replace(/^((?:int|double|float|char|String|boolean|long|short|var|let|const|struct\s+\w+|[\w<>\[\]]+\*?)\s+)+/, ""),
+    );
+    const right = cleanExpression(assignment[2]);
+    if (/\{|\[/.test(right)) {
+      return `${left}에 배열/리스트/객체 묶음 ${right}가 초기 상태로 저장됩니다. 이후 인덱스 접근은 이 배치를 기준으로 합니다.${evidence}`;
+    }
+    if (/new\s+/.test(right)) {
+      return `${left}가 새 객체 ${right}를 가리킵니다. 이후 ${left}의 멤버 값 변화는 같은 객체를 참조하는 곳에도 영향을 줄 수 있습니다.${evidence}`;
+    }
+    if (/&|\*|->|\[\]/.test(compactLine)) {
+      return `${left}에 ${right}의 주소/참조 또는 배열 위치의 값이 들어갑니다. 포인터와 인덱스 이동은 이 줄의 저장 결과를 기준으로 이어집니다.${evidence}`;
+    }
+    return `${left}에 ${right} 계산 결과를 저장합니다. 이후 같은 변수나 멤버를 읽으면 이 값이 사용됩니다.${evidence}`;
+  }
+  if (/->|\.\w+|\[\d*.*\]|\*\w+|&\w+/.test(compactLine)) {
+    return `배열 인덱스, 객체 멤버, 포인터/참조 위치를 읽거나 바꾸는 줄입니다. 실제 값은 현재 가리키는 위치를 기준으로 결정됩니다.${evidence}`;
+  }
+  if (/^\s*[{};]+\s*$/.test(compactLine)) {
+    return "블록의 끝입니다. 직접 값이 바뀌지는 않고, 실행 흐름이 호출한 위치나 다음 줄로 이동합니다.";
+  }
+  return `이 줄의 식을 현재 변수 상태로 계산해 다음 줄의 기준 상태를 만듭니다.${evidence}`;
+}
+
+function shouldShowInAutoTrace(line) {
+  if (!line || /^cs$/i.test(line)) return false;
+  if (/^\d+$/.test(line)) return false;
+  if (/^\s*(#include|import|using)\b/.test(line)) return false;
+  if (/^\s*[{};]+\s*$/.test(line)) return false;
+  if (/^(public\s+)?(static\s+)?(class|interface|enum)\b/.test(line)) return false;
+  if (/^(class|interface|enum)\b/.test(line)) return false;
+  if (/^(public|private|protected)\s+(static\s+)?[\w<>\[\]]+\s+\w+\s*;?$/.test(line)) return false;
+  if (/^(public|private|protected)\s+\w+\s*\([^)]*\)\s*\{?$/.test(line)) return false;
+  if (/^(public|private|protected)\s+(static\s+)?[\w<>\[\]]+\s+\w+\s*\([^)]*\)\s*\{?$/.test(line)) return false;
+  if (/^(def|static|void|int|double|float|char|String|Data|Node|struct)\b.*\)\s*\{?$/.test(line) && !/[=+\-*/%]=|=/.test(line)) return false;
+  return true;
+}
+
+function buildAutoCodeTrace(question, codeLines, answer) {
+  const facts = splitAnswerFacts(question.answerHtml, answer);
+  const flowLines = codeLines.filter(shouldShowInAutoTrace);
+  const trace = [];
+
+  facts.slice(0, 3).forEach((fact, index) => {
+    trace.push({
+      code: index === 0 ? "정답 풀이 근거" : `정답 풀이 근거 ${index + 1}`,
+      note: fact,
+    });
+  });
+
+  flowLines.forEach((line) => {
+    trace.push({
+      code: line,
+      note: describeDataLine(line, answer, relatedFact(line, facts)),
+    });
+  });
+
+  if (!trace.some((step) => /최종|출력/.test(step.code) || /최종 답/.test(step.note))) {
+    trace.push({
+      code: "최종 답",
+      note: `위 흐름으로 마지막 출력/반환 위치에 도달하면 정답은 ${answer}입니다.`,
+    });
+  }
+
+  return trace;
 }
 
 function getCodingExplanation(question) {
@@ -472,16 +664,18 @@ function getCodingExplanation(question) {
   if (!isCoding) return null;
 
   const codeLines = extractCodeLines(question.promptHtml);
-  const trace = [];
+  const trace = buildAutoCodeTrace(question, codeLines, answer);
+  const language = detectCodeLanguage(prompt);
+  const languageLabel = language === "c" ? "C" : language === "java" ? "Java" : language === "python" ? "Python" : /sql/i.test(prompt) ? "SQL" : "코드";
 
   return {
-    title: /sql/i.test(prompt) ? "SQL 풀이 포인트" : "코드 추적 풀이",
+    title: /sql/i.test(prompt) ? "SQL 데이터 흐름" : `${languageLabel} 코드 흐름/데이터 흐름`,
     answer,
     summary: codeLines.length
-      ? "이 문제는 아직 값 변화까지 검증한 상세 풀이가 준비되지 않았습니다. 일반 문법 설명으로 대체하지 않기 위해 정답만 표시합니다."
-      : "이 문제는 코드 블록이 표 형태로 추출되지 않아 정답만 표시합니다.",
+      ? `코드를 위에서 아래로 따라가며 변수, 배열, 포인터/참조, 반복문에서 값이 바뀌는 지점을 정리했습니다. 마지막 출력값은 ${answer}입니다.`
+      : `코드 블록을 직접 추출하지 못한 문제라 정답과 풀이 근거 중심으로 정리했습니다. 마지막 답은 ${answer}입니다.`,
     trace,
-    mode: "summary",
+    mode: "auto",
   };
 }
 
