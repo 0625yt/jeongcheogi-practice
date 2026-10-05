@@ -1,4 +1,5 @@
 import { exams } from "./data/exams.js";
+import { exam2026Round2 } from "./data/exam2026Round2.js";
 import { customCodePracticeByLanguage } from "./data/codePractice.js";
 import { externalLanguageCodeQuestions } from "./data/languageCodePages.js";
 import {
@@ -79,7 +80,8 @@ export function questionTopics(question) {
 }
 
 export function buildCatalog() {
-  const original = exams.flatMap((exam) =>
+  const allExams = [...exams.filter((e) => e.id !== exam2026Round2.id), exam2026Round2];
+  const original = allExams.flatMap((exam) =>
     exam.questions.map((q) => ({
       ...q,
       key: `${exam.id}-${q.number}`,
@@ -137,12 +139,12 @@ export function buildCatalog() {
       title: `${label} 코드 문제`,
       keys: questions.filter((q) => q.language === language).map((q) => q.key),
     })),
-    ...exams.map((e) => ({
+    ...[exam2026Round2, ...exams.filter((e) => e.id !== exam2026Round2.id)].map((e) => ({
       ...e,
       keys: original.filter((q) => q.examId === e.id).map((q) => q.key),
     })),
   ];
-  return { questions, groups, frequencies, examCount: exams.length };
+  return { questions, groups, frequencies, examCount: allExams.length };
 }
 
 export function migrateProgress(old, catalog) {
@@ -157,6 +159,7 @@ export function migrateProgress(old, catalog) {
     ["python", "Python"],
   ]) {
     const legacy = catalog.questions.filter((q) => {
+      if (q.examId === "2026년-2회") return false;
       if (q.origin !== "past") return q.language === language;
       const text = plainText(q.promptHtml);
       const detected = /(C언어|C코드|C 언어|다음은 C\b)/i.test(text)

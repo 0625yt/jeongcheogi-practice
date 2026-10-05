@@ -32,18 +32,22 @@ import { detailedCodeExplanations } from "./data/detailedExplanations.js";
 import { codeFlows } from "./data/codeFlows.js";
 import { sourceNotes } from "./data/sourceNotes.js";
 import CodeExplanation from "./CodeExplanation.jsx";
+import MockExam from "./MockExam.jsx";
+import { flows2026Round2 } from "./data/flows2026Round2.js";
 import "./styles.css";
 
 const catalog = buildCatalog();
 const byKey = new Map(catalog.questions.map((q) => [q.key, q]));
 const STORAGE_KEY = "engineer-practical-study-v2";
 const explanations = Object.fromEntries(
-  Object.entries({ ...detailedCodeExplanations, ...codeFlows }).map(
-    ([key, value]) => [
-      key,
-      { ...value, warning: value.warning || sourceNotes[key] },
-    ],
-  ),
+  Object.entries({
+    ...detailedCodeExplanations,
+    ...codeFlows,
+    ...flows2026Round2,
+  }).map(([key, value]) => [
+    key,
+    { ...value, warning: value.warning || sourceNotes[key] },
+  ]),
 );
 const emptyState = {
   records: {},
@@ -99,6 +103,20 @@ function restoreState() {
 }
 
 function App() {
+  const [siteMode, setSiteMode] = useState(() => {
+    try {
+      return localStorage.getItem("engineer-site-mode") === "mock"
+        ? "mock"
+        : "study";
+    } catch {
+      return "study";
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem("engineer-site-mode", siteMode);
+    } catch {}
+  }, [siteMode]);
   const [study, setStudy] = useState(restoreState);
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
@@ -246,6 +264,19 @@ function App() {
     event.target.value = "";
   }
 
+  if (siteMode === "mock")
+    return (
+      <MockExam
+        catalog={catalog}
+        explanations={explanations}
+        onBack={() => setSiteMode("study")}
+        onApplyRecords={(records) => {
+          setStudy((s) => ({ ...s, records: { ...s.records, ...records } }));
+          setNotice("모의시험 결과를 학습 기록에 반영했습니다.");
+        }}
+      />
+    );
+
   return (
     <main
       className={`app ${study.examPanel ? "examPanelOpen" : ""} ${study.numberPanel ? "numberPanelOpen" : ""}`}
@@ -257,6 +288,10 @@ function App() {
           <span>기출 훈련장</span>
         </div>
         <div className="mobilePanelActions">
+          <button onClick={() => setSiteMode("mock")}>
+            <Shuffle size={17} />
+            모의시험
+          </button>
           <button
             aria-expanded={study.examPanel}
             aria-controls="examPanel"
@@ -582,6 +617,7 @@ function App() {
                       <CodeExplanation
                         key={current.key}
                         explanation={explanation}
+                        language={current.language}
                       />
                     </>
                   ) : (

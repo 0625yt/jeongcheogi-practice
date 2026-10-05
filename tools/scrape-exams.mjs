@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 
 const sources = [
+  ["2026년 2회", "https://chobopark.tistory.com/562"],
   ["2026년 1회", "https://chobopark.tistory.com/561"],
   ["2025년 1회", "https://chobopark.tistory.com/540"],
   ["2025년 2회", "https://chobopark.tistory.com/554"],
@@ -32,7 +33,10 @@ const clean = (html) =>
     .replace(/\s+onclick="[^"]*"/gi, "")
     .replace(/\s+srcset="[^"]*"/gi, "")
     .replace(/<a class="btn-toggle-moreless"[\s\S]*?<\/a>/gi, "")
-    .replace(/<div style="text-align:\s*right;[\s\S]*?Colored by Color Scripter[\s\S]*?<\/div>/gi, "");
+    .replace(
+      /<div style="text-align:\s*right;[\s\S]*?Colored by Color Scripter[\s\S]*?<\/div>/gi,
+      "",
+    );
 
 const textOnly = (html) =>
   html
@@ -46,19 +50,30 @@ const textOnly = (html) =>
     .trim();
 
 function extractArticle(html) {
-  const mobile = html.match(/<div class="blogview_content[\s\S]*?">([\s\S]*?)<\/article>/s);
+  const mobile = html.match(
+    /<div class="blogview_content[\s\S]*?">([\s\S]*?)<\/article>/s,
+  );
   if (mobile) return mobile[1];
-  const pc = html.match(/<div class="tt_article_useless_p_margin contents_style">([\s\S]*?)<div data-react-app="EntryContent"/s);
+  const pc = html.match(
+    /<div class="tt_article_useless_p_margin contents_style">([\s\S]*?)<div data-react-app="EntryContent"/s,
+  );
   if (pc) return pc[1];
   return "";
 }
 
 function removeNavigationTables(article) {
   let output = article;
-  const examHeading = output.search(/\[[0-9]{4}년\s*[0-9]회\][\s\S]*?정보처리기사\s*실기\s*복원\s*문제/);
+  const examHeading = output.search(
+    /\[[0-9]{4}년\s*[0-9]회\][\s\S]*?정보처리기사\s*실기\s*복원\s*문제/,
+  );
   if (examHeading > -1) output = output.slice(examHeading);
-  const firstQuestion = output.search(/<p[^>]*>\s*(?:<b[^>]*>\s*)+(?:<span[^>]*>\s*)?1\s*[.&]/i);
-  const trailingNav = output.indexOf("클릭하면 해당 페이지로 이동됩니다.", Math.max(firstQuestion, 0) + 100);
+  const firstQuestion = output.search(
+    /<p[^>]*>\s*(?:<b[^>]*>\s*)+(?:<span[^>]*>\s*)?1\s*[.&]/i,
+  );
+  const trailingNav = output.indexOf(
+    "클릭하면 해당 페이지로 이동됩니다.",
+    Math.max(firstQuestion, 0) + 100,
+  );
   if (trailingNav > -1) {
     const tableStart = output.lastIndexOf("<table", trailingNav);
     output = output.slice(0, tableStart > -1 ? tableStart : trailingNav);
@@ -67,9 +82,16 @@ function removeNavigationTables(article) {
 }
 
 function splitQuestions(article) {
-  const candidates = [...article.matchAll(/<p[^>]*>\s*(?:<b[^>]*>\s*)+(?:<span[^>]*>\s*)?([0-9]{1,2})\s*[.&]/gi)]
+  const candidates = [
+    ...article.matchAll(
+      /<p[^>]*>\s*(?:<b[^>]*>\s*)+(?:<span[^>]*>\s*)?([0-9]{1,2})\s*[.&]/gi,
+    ),
+  ]
     .map((match) => ({ index: match.index, number: Number(match[1]) }))
-    .filter((item, index, list) => index === 0 || item.index !== list[index - 1].index);
+    .filter(
+      (item, index, list) =>
+        index === 0 || item.index !== list[index - 1].index,
+    );
 
   const starts = [];
   let expectedNumber = 1;
@@ -85,9 +107,16 @@ function splitQuestions(article) {
     .map((start, index) => {
       const end = starts[index + 1]?.index ?? article.length;
       const raw = clean(article.slice(start.index, end));
-      const answerMatch = raw.match(/<div[^>]*data-ke-type="moreLess"[\s\S]*?<div class="moreless-content">([\s\S]*?)<\/div>\s*<\/div>/i);
+      const answerMatch = raw.match(
+        /<div[^>]*data-ke-type="moreLess"[\s\S]*?<div class="moreless-content">([\s\S]*?)<\/div>\s*<\/div>/i,
+      );
       const answerHtml = answerMatch ? clean(answerMatch[1]) : "";
-      const promptHtml = clean(raw.replace(/<div[^>]*data-ke-type="moreLess"[\s\S]*?<div class="moreless-content">[\s\S]*?<\/div>\s*<\/div>/gi, ""));
+      const promptHtml = clean(
+        raw.replace(
+          /<div[^>]*data-ke-type="moreLess"[\s\S]*?<div class="moreless-content">[\s\S]*?<\/div>\s*<\/div>/gi,
+          "",
+        ),
+      );
       return {
         number: start.number,
         promptHtml,
@@ -100,9 +129,17 @@ function splitQuestions(article) {
 
 const exams = [];
 
-for (const [title, sourceUrl] of sources) {
-  const response = await fetch(sourceUrl.replace("https://chobopark.tistory.com/", "https://chobopark.tistory.com/m/"));
-  if (!response.ok) throw new Error(`${title} fetch failed: ${response.status}`);
+for (const [title, sourceUrl] of process.argv.includes("--latest")
+  ? sources.slice(0, 1)
+  : sources) {
+  const response = await fetch(
+    sourceUrl.replace(
+      "https://chobopark.tistory.com/",
+      "https://chobopark.tistory.com/m/",
+    ),
+  );
+  if (!response.ok)
+    throw new Error(`${title} fetch failed: ${response.status}`);
   const html = await response.text();
   const article = removeNavigationTables(extractArticle(html));
   const questions = splitQuestions(article);
@@ -112,6 +149,10 @@ for (const [title, sourceUrl] of sources) {
 
 await mkdir("src/data", { recursive: true });
 await writeFile(
-  "src/data/exams.js",
-  `export const exams = ${JSON.stringify(exams, null, 2)};\n`,
+  process.argv.includes("--latest")
+    ? "src/data/exam2026Round2.js"
+    : "src/data/exams.js",
+  process.argv.includes("--latest")
+    ? `export const exam2026Round2 = ${JSON.stringify(exams[0], null, 2)};\n`
+    : `export const exams = ${JSON.stringify(exams, null, 2)};\n`,
 );

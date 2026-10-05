@@ -107,7 +107,7 @@ test("bookmark and frequency filtering stay usable", async ({ page }) => {
   await page.getByRole("button", { name: "북마크", exact: true }).click();
   await expect(page.locator(".numberGrid button")).toHaveCount(1);
   await page.locator(".frequencyInfo summary").click();
-  await expect(page.locator(".frequencyInfo")).toContainText("20회차");
+  await expect(page.locator(".frequencyInfo")).toContainText("21회차");
   await page.getByRole("button", { name: "문제 북마크", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "1번 문제", exact: true }),

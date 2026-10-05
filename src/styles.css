@@ -691,7 +691,6 @@ small {
   border-radius: 4px;
 }
 .traceRow p {
-  grid-column: 2;
   line-height: 1.8;
   font-size: 14px;
   margin: 0;
@@ -724,7 +723,7 @@ small {
   position: sticky;
   bottom: 0;
   z-index: 20;
-  background: rgb(243 245 244 / 0.97);
+  background: #f3f5f4;
   border-top: 1px solid #d8e1db;
   margin-top: 18px;
   justify-content: space-between;
@@ -1032,5 +1031,625 @@ small {
 @media (prefers-reduced-motion: reduce) {
   * {
     scroll-behavior: auto !important;
+  }
+}
+
+.hljs-keyword,
+.hljs-type {
+  color: #286baf;
+  font-weight: 600;
+}
+.hljs-string {
+  color: #367a52;
+}
+.hljs-number,
+.hljs-literal {
+  color: #b34e23;
+}
+.hljs-title,
+.hljs-built_in {
+  color: #7257a2;
+}
+.hljs-comment {
+  color: #81928b;
+  font-style: italic;
+}
+.stepStrip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 0 0 6px;
+  margin: 0 0 16px;
+  max-width: 100%;
+}
+.stepStrip button {
+  width: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0;
+  font-size: 12px;
+  background: #f3f6f4;
+  border: 1px solid #d7e2da;
+  font-variant-numeric: tabular-nums;
+}
+.stepStrip button[aria-pressed="true"] {
+  background: #247858;
+  color: white;
+  border-color: #247858;
+}
+.traceNarrative {
+  display: grid;
+  gap: 9px;
+  margin: 12px 0 18px;
+}
+.traceNarrative p {
+  margin: 0;
+  line-height: 1.8;
+}
+.traceValue {
+  color: #9a4925;
+  font-weight: 600;
+}
+.inlineArrow {
+  color: #237755;
+}
+.activeTrace {
+  min-height: 260px;
+  padding: 0;
+}
+.traceCode {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.8;
+  margin: 12px 0;
+  background: #f3f6f8;
+  padding: 14px;
+  border-left: 3px solid #8aa2b7;
+  border-radius: 0 5px 5px 0;
+}
+.traceCode code,
+.traceRow .traceCode code {
+  padding: 0;
+  background: transparent;
+  font: inherit;
+}
+.traceBody {
+  min-width: 0;
+}
+.traceRow .traceCode {
+  margin: 0;
+}
+.stateChanges {
+  margin: 16px 0;
+}
+.stateChanges h5 {
+  font-size: 12px;
+  margin: 0 0 8px;
+  color: #73877a;
+  font-weight: 500;
+}
+.stateList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 0 18px;
+  border-top: 1px solid #dce8df;
+}
+.stateChange {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 10px 0;
+  border-bottom: 1px solid #dce8df;
+}
+.stateChange > code {
+  font:
+    12px "SFMono-Regular",
+    Consolas,
+    monospace;
+  color: #415d4c;
+  background: transparent;
+  padding: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.stateChange > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.stateChange svg {
+  color: #86a08e;
+  flex-shrink: 0;
+}
+.beforeValue {
+  color: #85958b;
+}
+.stateChange strong {
+  color: #176c48;
+  background: #eaf5ed;
+  padding: 3px 6px;
+  border-radius: 3px;
+  white-space: pre-wrap;
+  max-width: 100%;
+}
+.iterationTable {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 16px 0;
+  border: 1px solid #dce5e0;
+  border-radius: 5px;
+}
+.iterationTable table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  font-size: 13px;
+}
+.iterationTable th {
+  text-align: left;
+  background: #eef3f0;
+  color: #526b5b;
+  font-weight: 500;
+  padding: 10px 14px;
+}
+.iterationTable td {
+  padding: 9px 14px;
+  border-top: 1px solid #e4ebe6;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+}
+.iterationTable tr:last-child {
+  background: #f0f7f2;
+}
+.iterationTable td:last-child {
+  color: #186d49;
+  font-weight: 600;
+}
+.traceOutput {
+  margin: 16px 0;
+  background: #233b30;
+  color: #d8eee0;
+  border-radius: 5px;
+  padding: 12px 15px;
+}
+.traceOutput > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: #a4c8b2;
+}
+.traceOutput pre,
+.activeTrace .traceOutput pre {
+  font:
+    14px/1.6 "SFMono-Regular",
+    Consolas,
+    monospace;
+  background: transparent;
+  padding: 0;
+  margin: 8px 0 0;
+  white-space: pre-wrap;
+  color: #f4fff7;
+  overflow-wrap: anywhere;
+}
+.traceTree {
+  padding: 15px 0;
+  margin: 15px 0;
+  text-align: center;
+  width: min(320px, 100%);
+}
+.traceTree span,
+.treeRoot {
+  display: inline-block;
+  min-width: 42px;
+  padding: 7px 10px;
+  background: #e9f2f8;
+  border: 1px solid #c8dce8;
+  border-radius: 4px;
+  font:
+    14px Consolas,
+    monospace;
+}
+.treeRoot {
+  background: #e7f4e9;
+  border-color: #aed4b8;
+}
+.treeBranches {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 18px;
+  position: relative;
+}
+.treeBranches:before {
+  content: "";
+  position: absolute;
+  left: 25%;
+  right: 25%;
+  top: -10px;
+  border-top: 1px solid #b9cfc1;
+}
+.treeBranches > div {
+  position: relative;
+}
+.treeBranches > div:before {
+  content: "";
+  position: absolute;
+  height: 10px;
+  top: -10px;
+  left: 50%;
+  border-left: 1px solid #b9cfc1;
+}
+.treeLeaves {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+.traceTree figcaption {
+  font-size: 11px;
+  color: #678475;
+  margin-top: 12px;
+}
+.backStudy {
+  background: #2c4238;
+  color: #eff6f1;
+}
+.mockWorkspace {
+  padding-bottom: 20px;
+}
+.mockSetupHeading {
+  margin: 24px 0;
+}
+.mockSetupHeading p {
+  font-size: 13px;
+  color: #71867a;
+  margin-bottom: 7px;
+}
+.mockSetupHeading h2 {
+  font-size: 26px;
+  margin: 0;
+}
+.examRules {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid #d8e1db;
+  border-bottom: 1px solid #d8e1db;
+  padding: 24px 0;
+  gap: 16px;
+}
+.examRules > div {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 4px 10px;
+  align-items: center;
+}
+.examRules strong {
+  font-size: 22px;
+  font-weight: 600;
+}
+.examRules svg {
+  color: #678977;
+}
+.examRules span {
+  grid-column: 2;
+  font-size: 12px;
+  color: #82958a;
+}
+.mockSettings {
+  padding: 28px 0;
+}
+.mockSettings > label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 9px;
+}
+.mockSettings select {
+  height: 42px;
+  width: min(320px, 100%);
+  background: white;
+  border: 1px solid #cfded4;
+  border-radius: 5px;
+  padding: 0 12px;
+}
+.blueprintCounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin: 18px 0;
+  font-size: 13px;
+  color: #68806f;
+}
+.blueprintCounts b {
+  color: #263f31;
+  margin-left: 5px;
+}
+.mockSettings p {
+  font-size: 13px;
+  color: #687f6e;
+  max-width: 650px;
+  margin-bottom: 22px;
+}
+.mockRuleNote {
+  border-top: 1px solid #d8e1db;
+  padding-top: 16px;
+  font-size: 12px;
+  color: #788c7f;
+  max-width: 680px;
+}
+.mockRuleNote a {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+}
+.mockHistory {
+  margin-top: 35px;
+}
+.mockHistory h3 {
+  font-size: 16px;
+}
+.mockHistory button {
+  display: flex;
+  justify-content: space-between;
+  text-align: left;
+  width: 100%;
+  background: transparent;
+  border-bottom: 1px solid #d8e1db;
+  border-radius: 0;
+  padding: 14px 0;
+  gap: 12px;
+  font-size: 13px;
+}
+.mockHistory button b {
+  margin-left: auto;
+  white-space: nowrap;
+}
+.mockStatus {
+  position: sticky;
+  top: 72px;
+  z-index: 25;
+  background: #f3f5f4;
+  padding: 12px 0;
+  border-bottom: 1px solid #d8e1db;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+.mockStatus p {
+  font-size: 12px;
+  color: #6d8374;
+  margin: 0 0 6px;
+}
+.mockStatus h2 {
+  font-size: 24px;
+  margin: 0;
+}
+.examClock {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font:
+    21px "SFMono-Regular",
+    Consolas,
+    monospace;
+  color: #17694b;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.examClock.urgent {
+  color: #b24232;
+}
+.examResult {
+  text-align: right;
+}
+.examResult strong {
+  display: block;
+  font-size: 22px;
+  color: #20734f;
+}
+.examResult span {
+  font-size: 12px;
+  color: #687f6e;
+}
+.mockSubmittedNote {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  color: #557463;
+  padding: 12px 0;
+  margin-bottom: 14px;
+  border-top: 1px solid #d8e1db;
+  border-bottom: 1px solid #d8e1db;
+}
+.mockSubmittedNote button {
+  font-size: 12px;
+  min-height: 34px;
+}
+.mockGrading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 25px;
+  border-top: 1px solid #dce5e0;
+  padding-top: 18px;
+  font-size: 13px;
+}
+.mockGrading input {
+  width: 68px;
+  height: 40px;
+  padding: 0 8px;
+  border: 1px solid #b9cebf;
+  border-radius: 5px;
+  background: white;
+  font-variant-numeric: tabular-nums;
+}
+.mockGrading label {
+  font-weight: 600;
+  margin-right: 8px;
+}
+.mockGrading button {
+  min-height: 36px;
+  font-size: 12px;
+}
+.mockGrading button[aria-pressed="true"] {
+  border-color: #238057;
+  background: #e0f0e5;
+  color: #186647;
+}
+.examNavNote {
+  font-size: 11px;
+  color: #698571;
+  line-height: 1.8;
+  margin-top: 15px;
+}
+.numberGrid .examFlag {
+  position: absolute;
+  top: 3px;
+  right: 2px;
+  color: #bb7c22;
+}
+.submitExam {
+  background: #1b7357 !important;
+  color: white !important;
+  border-color: #1b7357 !important;
+}
+.dialogBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgb(12 28 18 / 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.submitDialog {
+  width: min(420px, 100%);
+  padding: 26px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 14px 60px rgb(0 0 0 / 0.2);
+}
+.submitDialog h2 {
+  font-size: 20px;
+  margin-bottom: 14px;
+}
+.submitDialog p {
+  font-size: 14px;
+  color: #64776a;
+  margin-bottom: 24px;
+}
+.submitDialog > div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+@media (max-width: 680px) {
+  .activeTrace {
+    min-height: 280px;
+  }
+  .mockApp .appHeader {
+    height: 72px;
+    flex-wrap: nowrap;
+  }
+  .mockApp .headerBrand {
+    width: auto;
+  }
+  .mockApp .questionNav {
+    top: 72px;
+    height: 151px;
+  }
+  .mockApp .numberGrid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+  .mockApp .numberGrid button {
+    min-height: 32px;
+  }
+  .mockApp .examNavNote {
+    display: none;
+  }
+  .mockApp .mockStatus {
+    top: 223px;
+  }
+  .stateList {
+    grid-template-columns: 1fr;
+  }
+  .iterationTable th,
+  .iterationTable td {
+    padding: 9px 10px;
+  }
+  .traceOutput pre {
+    font-size: 13px;
+  }
+  .traceNarrative p {
+    font-size: 14px;
+  }
+  .examRules {
+    gap: 8px;
+    padding: 20px 0;
+  }
+  .examRules > div {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .examRules strong {
+    font-size: 20px;
+  }
+  .examRules span {
+    grid-column: 1;
+  }
+  .examClock {
+    font-size: 18px;
+  }
+  .mockStatus {
+    gap: 10px;
+  }
+  .mockStatus h2 {
+    font-size: 21px;
+  }
+  .mockSubmittedNote {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .mockApp .pager {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .mockApp .pager button {
+    min-width: 70px;
+    padding: 0 9px;
+    font-size: 12px;
+  }
+  .mockHistory button {
+    font-size: 12px;
+    flex-wrap: wrap;
+  }
+  .examResult strong {
+    font-size: 18px;
+  }
+  .examResult span {
+    font-size: 11px;
+  }
+  .mockRuleNote {
+    font-size: 11px;
+  }
+  .mockStatus .examClock svg {
+    width: 16px;
   }
 }

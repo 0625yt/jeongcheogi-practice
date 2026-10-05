@@ -7,11 +7,16 @@ import { buildCatalog } from "../src/studyModel.js";
 import { extractCodeLines, plainText } from "../src/codeContent.js";
 import { detailedCodeExplanations } from "../src/data/detailedExplanations.js";
 import { codeFlows } from "../src/data/codeFlows.js";
+import { flows2026Round2 } from "../src/data/flows2026Round2.js";
 globalThis.document = parseHTML("<html></html>").document;
-const flows = { ...detailedCodeExplanations, ...codeFlows };
+const flows = { ...detailedCodeExplanations, ...codeFlows, ...flows2026Round2 };
 const result = [];
 const compact = (text) => text.replace(/\s+/g, "").trim();
-for (const q of buildCatalog().questions.filter((q) => q.language)) {
+for (const q of buildCatalog().questions.filter(
+  (q) =>
+    q.language &&
+    (!process.argv.includes("--latest") || q.examId === "2026년-2회"),
+)) {
   const explanation = flows[q.explanationKey ?? q.key];
   if (!explanation?.trace?.length) throw new Error(`Missing flow: ${q.key}`);
   const source = extractCodeLines(q.promptHtml).join("\n");

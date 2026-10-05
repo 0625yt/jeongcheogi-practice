@@ -1,4 +1,5 @@
 import imageManifest from "./data/imageManifest.json" with { type: "json" };
+import { highlightCode } from "./codeHighlighter.js";
 
 export function plainText(html = "") {
   const element = document.createElement("div");
@@ -53,6 +54,12 @@ export function extractCodeLines(html) {
 export function prepareQuestionHtml(html) {
   const element = document.createElement("div");
   element.innerHTML = html;
+  const language =
+    detectCodeLanguage(element.textContent) ??
+    (/\bSQL\b/i.test(element.textContent) ? "sql" : null);
+  element
+    .querySelectorAll(".revenue_unit_wrap, .adsbygoogle, script, iframe")
+    .forEach((node) => node.remove());
   findCodeBlocks(element).forEach((block) => {
     const lines = codeBlockLines(block);
     const code = document.createElement("div");
@@ -68,7 +75,7 @@ export function prepareQuestionHtml(html) {
       number.setAttribute("aria-hidden", "true");
       number.textContent = index + 1;
       const content = document.createElement("code");
-      content.textContent = text || " ";
+      content.innerHTML = highlightCode(text || " ", language);
       row.append(number, content);
       code.append(row);
     });
@@ -95,6 +102,21 @@ export function prepareQuestionHtml(html) {
       /* Keep non-HTTP image references unchanged. */
     }
   });
+  return element.innerHTML;
+}
+
+export function prepareExamPrompt(html) {
+  const element = document.createElement("div");
+  element.innerHTML = prepareQuestionHtml(html);
+  const first = element.querySelector("p");
+  function removeNumber(node) {
+    if (node.nodeType === 3 && node.textContent.trim()) {
+      node.textContent = node.textContent.replace(/^\s*\d+\s*\.\s*/, "");
+      return true;
+    }
+    return [...node.childNodes].some(removeNumber);
+  }
+  if (first) removeNumber(first);
   return element.innerHTML;
 }
 

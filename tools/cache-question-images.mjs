@@ -1,16 +1,21 @@
 import { parseHTML } from "linkedom";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { exams } from "../src/data/exams.js";
+import { exam2026Round2 } from "../src/data/exam2026Round2.js";
 
 const imageKey = (url) => {
   const u = new URL(url);
   return u.origin + u.pathname;
 };
-const manifest = {};
+const manifest = JSON.parse(
+  readFileSync("src/data/imageManifest.json", "utf8"),
+);
 const failed = [];
 mkdirSync("public/question-assets", { recursive: true });
-for (const exam of exams) {
+for (const exam of process.argv.includes("--latest")
+  ? [exam2026Round2]
+  : [...exams, exam2026Round2]) {
   const oldDocument = parseHTML(
     exam.questions.map((q) => q.promptHtml + q.answerHtml).join("\n"),
   ).document;

@@ -12,6 +12,10 @@ export const detailedCodeExplanations = {
       {
         code: "int arr[10] = {80, 20, 50, 55, 45, 95, 55, 10, 40, 80};",
         note: "배열 원소 10개의 합은 530입니다.",
+        state: [
+          { name: "len", after: "10" },
+          { name: "av (호출마다 초기화)", after: "0" },
+        ],
       },
       {
         code: "double arr1(int p[], int len)",
@@ -19,7 +23,22 @@ export const detailedCodeExplanations = {
       },
       {
         code: "for (i = 0; i < len; i++) av += (double)p[i];",
-        note: "i=0..9에서 p[i]는 80,20,50,55,45,95,55,10,40,80입니다. av는 0→80→100→150→205→250→345→400→410→450→530으로 바뀝니다. i=10이 되면 10<10이 거짓이라 종료합니다.",
+        note: "각 반복에서 p[i]를 읽어 av에 더합니다. i=10이 되면 10<10이 거짓이라 종료합니다.",
+        table: {
+          columns: ["i", "p[i]", "av (더한 뒤)"],
+          rows: [
+            [0, 80, 80],
+            [1, 20, 100],
+            [2, 50, 150],
+            [3, 55, 205],
+            [4, 45, 250],
+            [5, 95, 345],
+            [6, 55, 400],
+            [7, 10, 410],
+            [8, 40, 450],
+            [9, 80, 530],
+          ],
+        },
       },
       {
         code: "return av / len;",
