@@ -131,6 +131,32 @@ test("question diagrams load from durable local assets", async ({ page }) => {
     .toBeTruthy();
 });
 
+test("language list numbering and filtered exam numbers remain consistent", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "회차", exact: true }).click();
+  await page.getByRole("button", { name: /C 코드 문제/ }).click();
+  const numbers = page.getByRole("navigation", { name: "문제 목록" });
+  await numbers.getByRole("button", { name: /^2번째 문제,/ }).click();
+  await expect(
+    page.getByRole("heading", { name: "2번 문제", exact: true }),
+  ).toBeVisible();
+  await expect(page.locator(".topbar p")).toContainText("원문 12번");
+  await expect(numbers.locator('button[aria-current="true"]')).toHaveText("2");
+  await page
+    .getByRole("complementary", { name: "회차 선택" })
+    .getByRole("button", { name: /2026년 1회/ })
+    .click();
+  await numbers.getByRole("button", { name: /^1번째 문제,/ }).click();
+  await page.getByRole("button", { name: "정답 및 풀이", exact: true }).click();
+  await page.getByRole("button", { name: "틀렸어요", exact: true }).click();
+  await page.getByRole("button", { name: "미풀이", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "2번 문제", exact: true }),
+  ).toBeVisible();
+  await expect(numbers.getByRole("button").nth(1)).toHaveText("2");
+});
+
 test("backup restores written answers and marks after a confirmed reset", async ({
   page,
 }) => {
