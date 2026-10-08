@@ -58,9 +58,14 @@ export default function MockExam({
   explanations,
   onBack,
   onApplyRecords,
+  initialBlueprint = "2026년-2회",
 }) {
   const [saved, setSaved] = useState(() => readSaved(catalog.questions));
-  const [blueprint, setBlueprint] = useState("2026년-2회");
+  const [blueprint, setBlueprint] = useState(initialBlueprint);
+  const selectedGroup = catalog.groups.find((g) => g.id === blueprint);
+  const predictedMode = selectedGroup?.kind === "predicted";
+  const blueprintTitle = (id) =>
+    catalog.groups.find((g) => g.id === id)?.title ?? id.replace("-", " ");
   const [now, setNow] = useState(Date.now());
   const [confirm, setConfirm] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
@@ -202,7 +207,7 @@ export default function MockExam({
       <header className="appHeader">
         <div className="headerBrand">
           <BookOpen size={23} />
-          <strong>랜덤 모의시험</strong>
+          <strong>모의시험</strong>
         </div>
         <button className="backStudy" onClick={onBack}>
           <ArrowLeft size={17} />
@@ -233,7 +238,7 @@ export default function MockExam({
               <div>
                 <BookOpen size={20} />
                 <strong>20문제</strong>
-                <span>기출 랜덤</span>
+                <span>{predictedMode ? "예상 문제집" : "기출 랜덤"}</span>
               </div>
               <div>
                 <CheckCircle2 size={20} />
@@ -248,15 +253,26 @@ export default function MockExam({
                 value={blueprint}
                 onChange={(e) => setBlueprint(e.target.value)}
               >
-                {catalog.groups
-                  .filter(
-                    (g) => g.id.startsWith("2025") || g.id.startsWith("2026"),
-                  )
-                  .map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.title} 구성
-                    </option>
-                  ))}
+                <optgroup label="기출 랜덤 구성">
+                  {catalog.groups
+                    .filter(
+                      (g) => g.id.startsWith("2025") || g.id.startsWith("2026"),
+                    )
+                    .map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.title} 구성
+                      </option>
+                    ))}
+                </optgroup>
+                <optgroup label="예상 문제집 · 고정 20문항">
+                  {catalog.groups
+                    .filter((g) => g.kind === "predicted")
+                    .map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.title}
+                      </option>
+                    ))}
+                </optgroup>
               </select>
               <div className="blueprintCounts">
                 {Object.entries(counts).map(([key, value]) => (
@@ -266,8 +282,9 @@ export default function MockExam({
                 ))}
               </div>
               <p>
-                선택한 회차의 유형별 문항 수를 맞춰 전체 회차 기출에서 중복 없이
-                출제합니다. 창작 문제는 제외합니다.
+                {predictedMode
+                  ? "선택한 예상 문제집의 20문항을 순서대로 풉니다. 기출 분석을 바탕으로 만든 창작 연습이며 실제 출제를 보장하지 않습니다."
+                  : "선택한 회차의 유형별 문항 수를 맞춰 전체 회차 기출에서 중복 없이 출제합니다. 창작 문제는 제외합니다."}
               </p>
               <button className="primary" onClick={start}>
                 <Shuffle size={18} />
@@ -297,7 +314,8 @@ export default function MockExam({
                     >
                       <span>
                         {new Date(s.startedAt).toLocaleDateString("ko-KR")} ·{" "}
-                        {s.blueprint.replace("-", " ")} 구성
+                        {blueprintTitle(s.blueprint)}
+                        {s.mode === "predicted" ? "" : " 구성"}
                       </span>
                       <b>
                         {summary.complete
@@ -316,8 +334,10 @@ export default function MockExam({
             <div className="mockStatus">
               <div>
                 <p>
-                  {session.blueprint.replace("-", " ")} 구성 ·{" "}
-                  {running ? "시험 진행 중" : "제출 완료"}
+                  {blueprintTitle(session.blueprint)}
+                  {session.mode === "predicted"
+                    ? " · 예상 문제"
+                    : " 구성"} · {running ? "시험 진행 중" : "제출 완료"}
                 </p>
                 <h2>{session.index + 1}번 문제</h2>
               </div>

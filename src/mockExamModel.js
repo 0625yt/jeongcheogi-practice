@@ -6,6 +6,7 @@ export const OFFICIAL_RULES_URL =
 
 export function examCategory(question) {
   if (question.language) return question.language;
+  if (["sql", "theory"].includes(question.category)) return question.category;
   return /\bSQL\b|SELECT\s|CREATE\s|UPDATE\s/i.test(
     plainText(question.promptHtml),
   )
@@ -16,7 +17,9 @@ export function examCategory(question) {
 export function blueprintCounts(questions, examId) {
   const counts = { c: 0, java: 0, python: 0, sql: 0, theory: 0 };
   questions
-    .filter((q) => q.examId === examId && q.origin === "past")
+    .filter(
+      (q) => q.examId === examId && ["past", "predicted"].includes(q.origin),
+    )
     .forEach((q) => counts[examCategory(q)]++);
   if (Object.values(counts).reduce((a, b) => a + b, 0) !== 20)
     throw new Error("20문제로 구성된 회차가 필요합니다.");
@@ -39,6 +42,8 @@ function shuffle(items, random) {
 }
 
 export function generateMockQuestions(questions, examId, random = Math.random) {
+  if (questions.some((q) => q.examId === examId && q.origin === "predicted"))
+    throw new Error("예상 문제집은 고정 문항 실전 모드로 응시해야 합니다.");
   const counts = blueprintCounts(questions, examId);
   const pool = questions.filter((q) => q.origin === "past");
   const used = new Set();
@@ -71,11 +76,19 @@ export function createMockSession(
   now = Date.now(),
   random = Math.random,
 ) {
+  const predicted = questions
+    .filter((q) => q.examId === examId && q.origin === "predicted")
+    .sort((a, b) => a.number - b.number);
+  if (predicted.length) blueprintCounts(questions, examId);
   return {
     id: crypto.randomUUID(),
     version: 1,
     blueprint: examId,
-    keys: generateMockQuestions(questions, examId, random).map((q) => q.key),
+    mode: predicted.length ? "predicted" : "random",
+    keys: (predicted.length
+      ? predicted
+      : generateMockQuestions(questions, examId, random)
+    ).map((q) => q.key),
     startedAt: now,
     deadline: now + MOCK_DURATION_MS,
     status: "running",
@@ -88,7 +101,13 @@ export function createMockSession(
 
 export function restoreMockSession(value, questions, now = Date.now()) {
   const keys = new Set(
-    questions.filter((q) => q.origin === "past").map((q) => q.key),
+    questions
+      .filter((q) =>
+        value?.mode === "predicted"
+          ? q.origin === "predicted" && q.examId === value.blueprint
+          : q.origin === "past",
+      )
+      .map((q) => q.key),
   );
   if (
     !value ||
@@ -98,6 +117,7 @@ export function restoreMockSession(value, questions, now = Date.now()) {
     value.keys.length !== 20 ||
     new Set(value.keys).size !== 20 ||
     !value.keys.every((k) => keys.has(k)) ||
+    (value.mode === "predicted" && keys.size !== 20) ||
     !Number.isFinite(value.startedAt) ||
     value.deadline !== value.startedAt + MOCK_DURATION_MS ||
     !["running", "submitted"].includes(value.status)

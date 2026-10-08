@@ -2,6 +2,7 @@ import { exams } from "./data/exams.js";
 import { exam2026Round2 } from "./data/exam2026Round2.js";
 import { customCodePracticeByLanguage } from "./data/codePractice.js";
 import { externalLanguageCodeQuestions } from "./data/languageCodePages.js";
+import { predictedExams } from "./data/predictedExams.js";
 import {
   plainText,
   extractCodeLines,
@@ -80,7 +81,10 @@ export function questionTopics(question) {
 }
 
 export function buildCatalog() {
-  const allExams = [...exams.filter((e) => e.id !== exam2026Round2.id), exam2026Round2];
+  const allExams = [
+    ...exams.filter((e) => e.id !== exam2026Round2.id),
+    exam2026Round2,
+  ];
   const original = allExams.flatMap((exam) =>
     exam.questions.map((q) => ({
       ...q,
@@ -117,9 +121,19 @@ export function buildCatalog() {
     key: `${q.origin}:${q.explanationKey ?? i}`,
     examId: q.origin,
   }));
-  const questions = [...original, ...additional].map((q) => ({
+  const predicted = predictedExams.flatMap((exam) =>
+    exam.questions.map((q) => ({
+      ...q,
+      key: `${exam.id}-${q.number}`,
+      examId: exam.id,
+      examTitle: exam.title,
+      origin: "predicted",
+      sourceUrl: "",
+    })),
+  );
+  const questions = [...original, ...additional, ...predicted].map((q) => ({
     ...q,
-    topics: questionTopics(q),
+    topics: q.topics ?? questionTopics(q),
   }));
   const frequencies = {};
   for (const q of questions.filter((q) => q.origin === "past")) {
@@ -137,14 +151,53 @@ export function buildCatalog() {
     ].map(([language, label]) => ({
       id: `코드기출-${label}`,
       title: `${label} 코드 문제`,
+      kind: "language",
       keys: questions.filter((q) => q.language === language).map((q) => q.key),
     })),
-    ...[exam2026Round2, ...exams.filter((e) => e.id !== exam2026Round2.id)].map((e) => ({
+    ...predictedExams.map((e) => ({
       ...e,
-      keys: original.filter((q) => q.examId === e.id).map((q) => q.key),
+      keys: predicted.filter((q) => q.examId === e.id).map((q) => q.key),
     })),
+    ...[exam2026Round2, ...exams.filter((e) => e.id !== exam2026Round2.id)].map(
+      (e) => ({
+        ...e,
+        kind: "past",
+        keys: original.filter((q) => q.examId === e.id).map((q) => q.key),
+      }),
+    ),
   ];
-  return { questions, groups, frequencies, examCount: allExams.length };
+  const recent = questions.filter(
+    (q) => q.origin === "past" && /^202[56]/.test(q.examId),
+  );
+  const predictionAnalysis = {
+    totalCount: original.length,
+    recentCount: recent.length,
+    codeCount: recent.filter((q) => q.language).length,
+    years: [2024, 2025, 2026].map((year) => {
+      const rows = original.filter((q) => q.examId.startsWith(String(year)));
+      return {
+        year,
+        total: rows.length,
+        c: rows.filter((q) => q.language === "c").length,
+        java: rows.filter((q) => q.language === "java").length,
+        python: rows.filter((q) => q.language === "python").length,
+      };
+    }),
+  };
+  for (const q of questions.filter((q) => q.origin === "predicted")) {
+    q.evidenceKeys = recent
+      .filter((p) => p.topics.some((t) => q.topics.includes(t)))
+      .sort((a, b) => b.examId.localeCompare(a.examId) || a.number - b.number)
+      .slice(0, 3)
+      .map((p) => p.key);
+  }
+  return {
+    questions,
+    groups,
+    frequencies,
+    examCount: allExams.length,
+    predictionAnalysis,
+  };
 }
 
 export function migrateProgress(old, catalog) {
@@ -159,6 +212,7 @@ export function migrateProgress(old, catalog) {
     ["python", "Python"],
   ]) {
     const legacy = catalog.questions.filter((q) => {
+      if (q.origin === "predicted") return false;
       if (q.examId === "2026년-2회") return false;
       if (q.origin !== "past") return q.language === language;
       const text = plainText(q.promptHtml);

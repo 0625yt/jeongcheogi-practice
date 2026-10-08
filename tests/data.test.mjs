@@ -5,6 +5,10 @@ import { buildCatalog, migrateProgress } from "../src/studyModel.js";
 import { codeFlows } from "../src/data/codeFlows.js";
 import { detailedCodeExplanations } from "../src/data/detailedExplanations.js";
 import { flows2026Round2 } from "../src/data/flows2026Round2.js";
+import {
+  predictedExams,
+  predictedExplanations,
+} from "../src/data/predictedExams.js";
 import { extractCodeLines, prepareQuestionHtml } from "../src/codeContent.js";
 import { existsSync } from "node:fs";
 import {
@@ -43,9 +47,10 @@ test("all code questions have dedicated data flow and stable code lines", () => 
     ...detailedCodeExplanations,
     ...codeFlows,
     ...flows2026Round2,
+    ...predictedExplanations,
   };
   const code = catalog.questions.filter((q) => q.language);
-  assert.equal(code.length, 164);
+  assert.equal(code.length, 199);
   for (const q of code) {
     const exp = explanations[q.explanationKey ?? q.key];
     assert.ok(exp?.trace?.length >= 2, q.key);
@@ -61,6 +66,72 @@ test("all code questions have dedicated data flow and stable code lines", () => 
       q.key,
     );
   }
+});
+
+test("five predicted workbooks have 100 distinct authored questions and recent evidence", () => {
+  assert.equal(predictedExams.length, 5);
+  const predicted = catalog.questions.filter((q) => q.origin === "predicted");
+  assert.equal(predicted.length, 100);
+  const prompts = new Set(
+    predicted.map((q) => q.promptHtml.replace(/^.*?<\/b>/, "")),
+  );
+  assert.equal(prompts.size, 100);
+  assert.equal(catalog.predictionAnalysis.recentCount, 100);
+  assert.equal(catalog.predictionAnalysis.codeCount, 40);
+  for (const group of catalog.groups.filter((g) => g.kind === "predicted")) {
+    assert.equal(group.keys.length, 20);
+    assert.deepEqual(blueprintCounts(catalog.questions, group.id), {
+      c: 3,
+      java: 2,
+      python: 2,
+      sql: 4,
+      theory: 9,
+    });
+    for (const key of group.keys) {
+      const q = predicted.find((q) => q.key === key);
+      assert.ok(q.answerText && q.answerHtml, key);
+      assert.ok(q.evidenceKeys.length, key);
+      assert.ok(
+        q.evidenceKeys.every((k) =>
+          catalog.questions.some(
+            (p) =>
+              p.key === k && p.origin === "past" && /^202[56]/.test(p.examId),
+          ),
+        ),
+        key,
+      );
+      if (q.language) {
+        const flow = predictedExplanations[q.explanationKey];
+        assert.equal(flow.answer, q.answerText, key);
+        assert.equal(flow.trace.at(-1).output, q.answerText, key);
+      } else assert.ok(q.answerHtml.includes("풀이"), key);
+    }
+  }
+});
+
+test("predicted timed exams keep their exact set and never contaminate genuine random exams", () => {
+  for (const group of catalog.groups.filter((g) => g.kind === "predicted")) {
+    const s = createMockSession(catalog.questions, group.id, 1000);
+    assert.equal(s.mode, "predicted");
+    assert.deepEqual(s.keys, group.keys);
+    s.answers[s.keys[0]] = "저장 답안";
+    const r = restoreMockSession(s, catalog.questions, 2000);
+    assert.equal(r.answers[r.keys[0]], "저장 답안");
+    assert.equal(
+      restoreMockSession({ ...s, blueprint: "2026년-2회" }, catalog.questions),
+      null,
+    );
+    assert.equal(
+      restoreMockSession({ ...s, mode: "random" }, catalog.questions),
+      null,
+    );
+    assert.throws(() => generateMockQuestions(catalog.questions, group.id));
+  }
+  assert.ok(
+    generateMockQuestions(catalog.questions, "2026년-2회").every(
+      (q) => q.origin === "past",
+    ),
+  );
 });
 test("legacy language progress migrates to original question, not custom practice", () => {
   const records = migrateProgress(

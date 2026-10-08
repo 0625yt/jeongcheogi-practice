@@ -34,6 +34,8 @@ import { sourceNotes } from "./data/sourceNotes.js";
 import CodeExplanation from "./CodeExplanation.jsx";
 import MockExam from "./MockExam.jsx";
 import { flows2026Round2 } from "./data/flows2026Round2.js";
+import { predictedExplanations } from "./data/predictedExams.js";
+import PredictionOverview from "./PredictionOverview.jsx";
 import "./styles.css";
 
 const catalog = buildCatalog();
@@ -44,6 +46,7 @@ const explanations = Object.fromEntries(
     ...detailedCodeExplanations,
     ...codeFlows,
     ...flows2026Round2,
+    ...predictedExplanations,
   }).map(([key, value]) => [
     key,
     { ...value, warning: value.warning || sourceNotes[key] },
@@ -269,6 +272,7 @@ function App() {
       <MockExam
         catalog={catalog}
         explanations={explanations}
+        initialBlueprint={group?.kind === "predicted" ? group.id : "2026년-2회"}
         onBack={() => setSiteMode("study")}
         onApplyRecords={(records) => {
           setStudy((s) => ({ ...s, records: { ...s.records, ...records } }));
@@ -351,8 +355,15 @@ function App() {
           </button>
           {catalog.groups.map((g, i) => (
             <React.Fragment key={g.id}>
-              {i === 0 && <h3>언어별 코드</h3>}
-              {i === 3 && <h3>회차별 기출 · {catalog.examCount}회</h3>}
+              {(i === 0 || g.kind !== catalog.groups[i - 1]?.kind) && (
+                <h3>
+                  {g.kind === "language"
+                    ? "언어별 코드"
+                    : g.kind === "predicted"
+                      ? "예상 문제집 · 5권"
+                      : `회차별 기출 · ${catalog.examCount}회`}
+                </h3>
+              )}
               <button
                 className={`examButton ${g.id === study.group ? "active" : ""}`}
                 onClick={() => selectGroup(g.id)}
@@ -472,9 +483,11 @@ function App() {
                   {isCollection && ` · 원문 ${current.number}번`}{" "}
                   {current.origin !== "past" && (
                     <span className="originBadge">
-                      {current.origin === "practice"
-                        ? "창작 연습"
-                        : "기출 모음"}
+                      {current.origin === "predicted"
+                        ? "예상 · 창작"
+                        : current.origin === "practice"
+                          ? "창작 연습"
+                          : "기출 모음"}
                     </span>
                   )}
                 </p>
@@ -515,6 +528,19 @@ function App() {
                 )}
               </div>
             </header>
+            {group?.kind === "predicted" && (
+              <PredictionOverview
+                catalog={catalog}
+                group={group}
+                current={current}
+                onExam={() => setSiteMode("mock")}
+                onRelated={(q) => {
+                  selectGroup(q.examId);
+                  patch({ currentKey: q.key });
+                  window.scrollTo({ top: 0, behavior: "instant" });
+                }}
+              />
+            )}
             {!!frequent.length && (
               <details className="frequencyInfo">
                 <summary>

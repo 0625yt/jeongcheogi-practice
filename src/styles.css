@@ -913,7 +913,7 @@ small {
     position: sticky;
     top: 110px;
     z-index: 30;
-    max-height: 151px;
+    max-height: 170px;
     height: auto;
     border-left: 0;
     border-bottom: 1px solid #cfded3;
@@ -936,7 +936,7 @@ small {
     height: 24px;
   }
   .numberGrid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 5px;
   }
   .numberGrid button {
@@ -1652,4 +1652,107 @@ small {
   .mockStatus .examClock svg {
     width: 16px;
   }
+}
+/* Predicted workbooks remain separate from past-exam statistics. */
+.predictionContext {
+  border-top: 2px solid #208872;
+  border-bottom: 1px solid #ccd9d2;
+  padding: 16px 0;
+  margin: 16px 0;
+}
+.predictionHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.predictionHeading strong {
+  font-size: 17px;
+}
+.predictionHeading p {
+  margin: 5px 0 0;
+  color: #52665c;
+  font-size: 14px;
+}
+.predictionHeading button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 12px;
+  border: 1px solid #94b9aa;
+  border-radius: 6px;
+  background: #fff;
+}
+.predictionCaution {
+  font-size: 13px;
+  color: #79513b;
+  line-height: 1.6;
+}
+.predictionContext details {
+  font-size: 14px;
+  margin-top: 10px;
+}
+.predictionContext summary {
+  cursor: pointer;
+  font-weight: 600;
+  line-height: 1.6;
+}
+.predictionContext details p {
+  line-height: 1.8;
+  color: #43584d;
+}
+.predictionTable {
+  overflow-x: auto;
+  margin: 12px 0;
+}
+.predictionTable table {
+  border-collapse: collapse;
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+.predictionTable th,
+.predictionTable td {
+  border-bottom: 1px solid #d5dfd9;
+  padding: 9px 12px;
+  text-align: left;
+}
+.predictionTable thead {
+  background: #e9efeb;
+}
+.predictionEvidence > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.predictionEvidence button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px solid #becfc5;
+  border-radius: 4px;
+  padding: 7px 9px;
+  font-size: 13px;
+}
+.predictionData {
+  overflow-x: auto;
+  margin: 18px 0;
+}
+.questionContent .predictionData table {
+  display: table;
+  width: 100%;
+  overflow: visible;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.predictionData th,
+.predictionData td {
+  padding: 9px 12px;
+  text-align: left;
+  border-bottom: 1px solid #d5dfd9;
+}
+.predictionData thead {
+  background: #eef2ef;
 }
